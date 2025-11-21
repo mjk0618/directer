@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIRECTER: Enhancing Instruction Following via Activation Steering</title>
+    
+    <!-- === FAVICON === -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%232563eb%22/><path d=%22M28 72 L72 28 M72 28 L42 28 M72 28 L72 58%22 stroke=%22white%22 stroke-width=%2212%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
+
+    <!-- === RESOURCES === -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <!-- MathJax -->
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      },
+      svg: { fontCache: 'global' },
+      startup: { typeset: false }
+    };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #2563eb, #4f46e5); /* Blue to Indigo */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Tooltip */
+        .tooltip-container { position: relative; display: inline-block; }
+        .tooltip-text {
+            visibility: hidden;
+            width: max-content;
+            min-width: 220px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 0.75rem;
+            font-weight: normal;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+        /* Styles from Visualization Demo */
+        .layer-stack { perspective: 1000px; }
+        .layer-block { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        .layer-active {
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.5); 
+            background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
+            opacity: 1;
+            transform: translateZ(10px);
+        }
+        .layer-inactive { background: #334155; opacity: 0.3; transform: translateZ(0px); }
+        .distribution-bar { transition: height 0.5s ease-out, background-color 0.3s; }
+        .fade-enter { opacity: 0; transform: translateY(10px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 0.5s ease; }
+        
+        /* Scrollbars */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Details/Summary for Abstract */
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        
+        /* Citation Area */
+        .citation-content {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        /* === FIX: Force MathJax Inline === */
+        mjx-container {
+            display: inline-block !important;
+            margin: 0 !important;
+            vertical-align: middle !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- Navigation -->
+    <nav id="navbar" class="fixed top-0 w-full z-50 glass-panel transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <span class="material-symbols-outlined text-blue-600 text-3xl">assistant_direction</span>
+                    <span class="font-bold text-xl tracking-tight text-slate-900">DIRECTER</span>
+                </div>
+                
+                <div class="hidden md:flex gap-8 text-sm font-medium text-slate-600">
+                    <a href="#abstract" class="hover:text-blue-600 transition-colors">Motivation</a>
+                    <a href="#demo" class="hover:text-blue-600 transition-colors">Demo</a>
+                    <a href="#method" class="hover:text-blue-600 transition-colors">Methodology</a>
+                    <!-- Swapped Order in Nav to match Page Order -->
+                    <a href="#results" class="hover:text-blue-600 transition-colors">Results</a>
+                    <a href="#concepts" class="hover:text-blue-600 transition-colors">Background</a>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <!-- add arXiv link -->
+                    <a href="" target="_blank" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg shadow-slate-200 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">description</span>
+                        Paper
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="absolute inset-0 -z-10">
+            <div class="w-full h-full bg-gradient-to-b from-white via-indigo-50/40 to-slate-50"></div>
+            <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-bl from-blue-100/30 to-transparent blur-3xl"></div>
+        </div>
+
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <!-- ASSET: DO NOT MOVE -->
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-semibold uppercase tracking-wider mb-8 animate-float">
+                Preprint
+            </div>
+            
+            <h1 class="text-3xl lg:text-5xl font-extrabold tracking-tight text-slate-900 mb-8 leading-tight">
+                Enhancing Instruction Following via <br>
+                <span class="gradient-text">Activation Steering</span> with Dynamic Rejection
+            </h1>
+            
+            <!-- Authors with Links -->
+            <div class="flex flex-wrap justify-center gap-x-8 gap-y-2 text-lg text-slate-600 mb-10">
+                <div class="tooltip-container font-medium transition-colors hover:text-blue-600">
+                    <a href="https://github.com/mjk0618" target="_blank" class="border-transparent hover:border-blue-600 pb-0.5">Minjae Kang</a>
+                    <span class="tooltip-text">Independent Researcher</span>
+                </div>
+                <div class="tooltip-container font-medium transition-colors hover:text-blue-600">
+                    <a href="https://sites.google.com/view/jaehyungkim" target="_blank" class="border-transparent hover:border-blue-600 pb-0.5">Jaehyung Kim</a>
+                    <span class="tooltip-text">Yonsei University</span>
+                </div>
+            </div>
+
+            <!-- TL;DR & Abstract Box -->
+            <div class="max-w-3xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm text-left mb-8 overflow-hidden">
+                <div class="p-6 pb-4">
+                    <div class="flex items-start gap-4 mb-2">
+                        <span class="material-symbols-outlined text-indigo-500 mt-1 fill-current">lightbulb</span>
+                        <div>
+                            <h3 class="font-bold text-slate-900 mb-1 text-base">TL;DR</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">
+                                DIRECTER is a dynamic steering method that mitigates oversteering in LLMs by a plausibility-guided decoding loop that rejects implausible outputs and adaptively modulates steering strength without retraining.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Expandable Abstract -->
+                <div class="px-6 pb-6">
+                    <details class="group">
+                        <summary class="flex items-center gap-2 cursor-pointer font-bold text-sm text-slate-700 transition-colors select-none list-none">
+                            <span class="material-symbols-outlined text-slate-500 transition-transform group-open:rotate-90 text-lg">chevron_right</span>
+                            Read Abstract
+                        </summary>
+                        <div class="pt-4 pl-2 text-sm text-slate-600 leading-relaxed border-l-2 border-slate-100 ml-2 mt-2">
+                            <p class="mb-3">
+                                Large Language Models (LLMs), despite advances in instruction tuning, often fail to follow complex user instructions. Activation steering techniques aim to mitigate this by manipulating model internals, but have a potential risk of oversteering, where excessive emphasis on the instruction degrades task accuracy and overall text quality.
+                            </p>
+                            <p class="mb-3">
+                                To address this, we introduce DIRECTER, a novel steering method that dynamically modulates steering strength by scaling the KV cache without extra dataset. DIRECTER couples steering with a plausibility-guided decoding loop, which adaptively adjusts steering strength at each step by comparing the steered output distribution to the original. If the steered output is deemed implausible, steering strength is progressively weakened. This strength modulation is guided by a lightweight, one-time attention sensitivity analysis that ranks layers by their influence on model representations.
+                            </p>
+                            <p class="mb-3">
+                                Extensive evaluations show that DIRECTER significantly enhances instruction-following capabilities across diverse benchmarks, improving accuracy by up to 6.5% over baselines without the common trade-offs in generation quality or task fidelity. The proposed dynamic, plausibility-guided control during activation steering further demonstrates its potential as a general mechanism for mitigating oversteering that is compatible with existing baselines.
+                            </p>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <!-- add arXiv link -->
+                <a href="" target="_blank" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold transition-colors text-sm">
+                    <span class="material-symbols-outlined text-base">article</span>
+                    Paper
+                </a>
+                <a href="https://github.com/mjk0618/directer" target="_blank" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded-lg font-semibold transition-colors text-sm shadow-sm">
+                    <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" class="w-4 h-4 opacity-80" alt="GitHub">
+                    Code
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Motivation -->
+    <section id="abstract" class="py-20 bg-white border-y border-slate-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+                <div>
+                    <div class="mb-6">
+                        <span class="text-indigo-600 font-bold tracking-widest uppercase text-xs mb-2 block">MOTIVATION</span>
+                        <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight">The Oversteering Problem</h2>
+                    </div>
+                    
+                    <p class="text-lg text-slate-600 mb-6 leading-relaxed">
+                        While instruction tuning has advanced LLMs, they still struggle with complex constraints. Activation steering offers a training-free solution by manipulating internal states, but it suffers from a critical flaw: <strong>Oversteering</strong>.
+                    </p>
+                    <p class="text-lg text-slate-600 leading-relaxed">
+                        Static steering often forces the model to fixate on instructions at the expense of coherence or task fidelity. DIRECTER addresses this by introducing a <strong>dynamic rejection mechanism</strong> that acts as a safety valve, ensuring steering is applied only when it is plausible to the underlying model.
+                    </p>
+                </div>
+                
+                <!-- Visual Comparison -->
+                <div class="relative mt-4">
+                    <div class="bg-slate-50/50 rounded-2xl border border-slate-200 p-6 shadow-xl backdrop-blur-sm">
+                        <div class="flex items-center gap-2 mb-4 border-b border-slate-200 pb-4">
+                            <span class="w-3 h-3 rounded-full bg-red-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                            <span class="text-xs text-slate-400 font-mono ml-auto">Impact of Steering</span>
+                        </div>
+
+                        <!-- ADDED: User Prompt Section -->
+                        <div class="mb-5 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-symbols-outlined text-slate-400 text-sm">account_circle</span>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">User Prompt</span>
+                            </div>
+                            <p class="text-xs text-slate-700 font-mono leading-relaxed italic border-l-2 border-slate-200 pl-3">
+                                "Write an itinerary for my journey in a Shakespearean style. You are not allowed to use any commas in your response."
+                            </p>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- Bad Case -->
+                            <div class="p-4 bg-white rounded-lg border border-red-100 relative overflow-hidden group transition-all hover:shadow-md">
+                                <div class="relative z-10">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-slate-700 text-sm">Static Steering (Oversteering)</span>
+                                        <span class="px-2 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded uppercase">Fail</span>
+                                    </div>
+                                    <p class="text-slate-500 text-xs mt-2 font-mono bg-slate-50 p-2 rounded border border-slate-100">"Verily I shall heed thy command. This missive will contain no such marks..."</p>
+                                    <p class="text-xs text-red-500 mt-2 flex items-center gap-1 font-medium">
+                                        <span class="material-symbols-outlined text-[14px]">error</span>
+                                        Ignores the actual task (Itinerary)
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Good Case -->
+                            <div class="p-4 bg-white rounded-lg border border-blue-100 relative overflow-hidden group transition-all hover:shadow-md">
+                                <div class="relative z-10">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-slate-700 text-sm">DIRECTER</span>
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase">Success</span>
+                                    </div>
+                                    <p class="text-slate-500 text-xs mt-2 font-mono bg-slate-50 p-2 rounded border border-slate-100">"Fair traveler thou seekest to embark on a journey to Japan's mystic shores..."</p>
+                                    <p class="text-xs text-blue-600 mt-2 flex items-center gap-1 font-medium">
+                                        <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                        Follows constraints &amp; fulfills task
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERACTIVE DEMO SECTION -->
+    <section id="demo" class="py-24 bg-slate-900 text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-12">
+                <span class="text-orange-500 font-semibold tracking-wide uppercase text-sm">Interactive Simulation</span>
+                <h2 class="text-4xl font-bold mt-2 mb-4">See DIRECTER in Action</h2>
+                <p class="text-lg text-slate-400 max-w-3xl mx-auto">
+                    Observe how DIRECTER dynamically modulates steering strength by comparing steered distributions against the raw model's plausibility at each token step.
+                </p>
+            </div>
+
+            <!-- Visualization App Container -->
+            <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden flex flex-col lg:flex-row h-[650px]">
+                
+                <!-- Left Control Panel -->
+                <aside class="w-full lg:w-1/4 border-r border-slate-700 bg-slate-900/50 flex flex-col p-5 gap-4 shrink-0">
+                    <!-- Scenario Selector -->
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 block">Scenario</label>
+                        <div class="flex gap-2 mb-3">
+                            <button id="btn-scenario-shakespeare" onclick="app.loadScenario('shakespeare')" class="flex-1 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white bg-orange-600 rounded hover:bg-orange-500 transition-colors">Shakespeare</button>
+                            <button id="btn-scenario-json" onclick="app.loadScenario('json')" class="flex-1 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700 transition-colors">JSON</button>
+                        </div>
+                        <div class="p-3 rounded border border-slate-600 bg-slate-800/50">
+                            <h3 class="font-bold text-xs text-white mb-1" id="scenario-title">Shakespeare - No Commas</h3>
+                            <p class="text-[10px] text-slate-400" id="scenario-desc">Constraint: Write an itinerary for a trip to Japan without using any commas.</p>
+                        </div>
+                    </div>
+
+                    <!-- Output Display (Fixed Height) -->
+                    <div class="flex flex-col bg-black/30 rounded border border-slate-700 overflow-hidden h-40 shrink-0">
+                        <div class="bg-slate-800 px-3 py-1.5 border-b border-slate-700 flex justify-between items-center">
+                            <span class="text-[10px] font-bold text-slate-300 uppercase">Live Output</span>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-700 text-slate-300" id="status-badge">IDLE</span>
+                        </div>
+                        <div class="flex-1 p-3 font-serif text-sm leading-relaxed text-slate-200 overflow-y-auto custom-scrollbar whitespace-pre-wrap font-mono" id="output-text"></div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="grid grid-cols-2 gap-2 mt-auto">
+                        <button class="col-span-1 py-2 px-3 bg-slate-700 hover:bg-slate-600 text-white rounded font-bold text-xs flex items-center justify-center gap-2 transition-colors" onclick="app.step()">
+                            <span class="material-symbols-outlined text-sm">skip_next</span> Step
+                        </button>
+                        <button class="col-span-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-900/20" id="btn-play" onclick="app.togglePlay()">
+                            <span class="material-symbols-outlined text-sm" id="icon-play">play_arrow</span> <span id="text-play">Auto</span>
+                        </button>
+                        <button class="col-span-2 py-1 text-[10px] text-slate-500 hover:text-slate-300 flex items-center justify-center gap-1" onclick="app.reset()">
+                            <span class="material-symbols-outlined text-xs">restart_alt</span> Reset Simulation
+                        </button>
+                    </div>
+                </aside>
+
+                <!-- Main Viz Area -->
+                <section class="flex-1 relative bg-slate-900 flex flex-col p-6 gap-6 overflow-hidden">
+                    <!-- Background Grid -->
+                    <div class="absolute inset-0" style="background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none;"></div>
+
+                    <div class="flex gap-8 h-full z-10">
+                        <!-- 1. Layer Stack -->
+                        <div class="flex flex-col items-center gap-2 w-16 shrink-0 pt-8">
+                            <div class="text-center space-y-1">
+                                <h3 class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Layers</h3>
+                            </div>
+                            <div class="relative w-12 h-full layer-stack flex flex-col-reverse gap-[1px]" id="layer-container">
+                                <!-- Layers injected by JS -->
+                            </div>
+                            <div class="bg-slate-800 px-2 py-1 rounded border border-slate-700 text-[10px] font-mono text-orange-400 whitespace-nowrap transition-all duration-300" id="strength-badge">
+                                <span id="steering-strength">32</span>/32
+                            </div>
+                        </div>
+
+                        <!-- 2. Plausibility Engine -->
+                        <div class="flex-1 flex flex-col gap-4 max-w-md mx-auto justify-center">
+                            <!-- Distribution Charts -->
+                            <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-5 shadow-2xl backdrop-blur relative overflow-hidden h-64 flex flex-col justify-between">
+                                <!-- Raw -->
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1 items-center whitespace-nowrap">
+                                        <div class="flex items-center gap-1 text-blue-400 font-bold text-xs">
+                                            RAW <span class="text-slate-500 text-[14px] font-normal font-mono whitespace-nowrap">($p_t$)</span>
+                                        </div>
+                                        <span class="font-mono text-slate-300 opacity-0 transition-opacity text-[10px]" id="raw-top-token"></span>
+                                    </div>
+                                    <!-- UPDATED: Changed ID target logic in JS to use flex-start -->
+                                    <div class="flex items-start gap-6 border-b border-slate-600/50 pb-2 min-h-[3.5rem] relative" id="raw-dist-chart"></div>
+                                </div>
+
+                                <!-- Steered -->
+                                <div class="relative">
+                                    <div class="flex justify-between text-xs mb-1 items-center whitespace-nowrap">
+                                        <div class="flex items-center gap-1 text-orange-400 font-bold text-xs">
+                                            STEERED <span class="text-slate-500 text-[14px] font-normal font-mono whitespace-nowrap">($\tilde{p}_t$)</span>
+                                        </div>
+                                        <span class="font-mono text-slate-300 opacity-0 transition-opacity text-[10px]" id="steered-top-token"></span>
+                                    </div>
+                                    <!-- UPDATED: Increased min-h for overlay space -->
+                                    <div class="flex items-start gap-6 border-b border-slate-600/50 pb-2 min-h-[4.5rem]" id="steered-dist-chart"></div>
+
+                                    <!-- Overlays -->
+                                    <div class="absolute inset-0 flex items-center justify-center bg-slate-800/95 backdrop-blur-sm rounded transition-opacity duration-300 z-20 opacity-0 pointer-events-none" id="skip-overlay">
+                                        <div class="text-center">
+                                            <span class="material-symbols-outlined text-3xl text-slate-500 block mb-1">fast_forward</span>
+                                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Confident • Skipped</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- UPDATED: WIDER SPACING FOR REJECTION OVERLAY -->
+                                    <div class="absolute inset-0 flex items-center justify-center bg-red-900/95 backdrop-blur-sm rounded opacity-0 pointer-events-none transition-opacity duration-300 z-10 p-6" id="reject-overlay">
+                                        <div class="text-center w-full flex flex-col items-center justify-center gap-3">
+                                            <span class="material-symbols-outlined text-4xl text-red-200 block">block</span>
+                                            <span class="text-sm font-extrabold text-red-100 uppercase tracking-[0.15em]">Implausible</span>
+                                            <div class="text-xs text-red-200 italic font-medium opacity-90" id="reject-reason"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Logic Block -->
+                            <div class="bg-slate-900/80 border border-slate-700 rounded-xl p-4 flex items-center justify-between gap-4 shrink-0">
+                                <div class="flex-1">
+                                    <div class="text-[10px] uppercase text-slate-500 font-bold mb-1">Plausibility Check</div>
+                                    <div class="text-xs text-slate-300 font-mono bg-black/30 p-2 rounded border border-slate-800 flex items-center justify-center whitespace-nowrap overflow-hidden text-ellipsis">
+                                         $p_{raw}(\text{steered}) \ge \beta \cdot p_{raw}(\text{top})$
+                                    </div>
+                                </div>
+                                <div class="w-20 h-10 rounded flex items-center justify-center border border-slate-600 transition-all duration-300 transform bg-slate-800" id="decision-indicator">
+                                    <span class="text-[10px] font-bold text-slate-500">WAITING</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Right Panel: Metrics & Log -->
+                <aside class="w-full lg:w-1/4 border-l border-slate-700 bg-slate-900 p-4 flex flex-col gap-4 shrink-0">
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700 shrink-0">
+                        <h4 class="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider">Steering Dynamics</h4>
+                        <div class="h-24 w-full">
+                            <canvas id="steeringChart"></canvas>
+                        </div>
+                        <p class="text-[9px] text-slate-500 mt-2 leading-tight">
+                            # of Active Layers over time. <br/> 
+                            Drops indicate <strong>Dynamic Rejection</strong> events.
+                        </p>
+                    </div>
+
+                    <!-- Corrected Event Log -->
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700 flex-1 overflow-hidden flex flex-col min-h-[150px]">
+                        <h4 class="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider shrink-0">Event Log</h4>
+                        <ul class="space-y-2 text-[10px] font-mono flex-1 overflow-y-auto custom-scrollbar" id="event-log">
+                            <!-- Logs -->
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </section>
+
+    <!-- METHODOLOGY SECTION -->
+    <section id="method" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-16 text-center">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Method Breakdown</h2>
+                <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+                    Two key mechanisms further improve the effectiveness and efficiency of DIRECTER.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <!-- Layer Ranking -->
+                <div class="bg-white rounded-2xl p-8 border border-slate-200 relative overflow-hidden shadow-sm">
+                    <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-blue-600">bar_chart</span>
+                        Layer Sensitivity Ranking
+                    </h3>
+                    <p class="text-slate-600 text-sm mb-8 leading-relaxed">
+                        DIRECTER performs a one-time layerwise <strong>Sensitivity Analysis</strong>. <br/>
+                        It measures the distributional shift caused by steering each layer, then reorders them to prioritize high-leverage layers for steering.
+                    </p>
+                    <!-- REMOVED grey outline -->
+                    <div class="bg-white p-6 rounded-xl h-48 relative">
+                        <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-4 px-2">
+                            <span>Layer</span>
+                            <span>Sensitivity</span>
+                        </div>
+                        <div id="ranking-container" class="relative h-full">
+                            <!-- JS will populate -->
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <span id="ranking-status" class="text-[10px] font-bold uppercase tracking-widest text-blue-500">Step 1: Initial Order</span>
+                    </div>
+                </div>
+
+                <!-- Skipping Gate -->
+                <div class="bg-white rounded-2xl p-8 border border-slate-200 relative overflow-hidden shadow-sm">
+                    <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-purple-600">gate</span>
+                        Efficient Skipping Gate
+                    </h3>
+                    <p class="text-slate-600 text-sm mb-8 leading-relaxed">
+                        If the raw model is highly confident (i.e., large gap between Top-1 and Top-2 probabilities), DIRECTER skips the steering pass entirely to save compute.
+                        <br/><br/><br/><br/>
+                    </p>
+                    
+                    <!-- REMOVED grey outline -->
+                    <div class="bg-white p-6 rounded-xl h-48 flex flex-col items-center justify-center relative" id="gate-container">
+                        
+                        <div class="flex gap-8 items-end h-24 mb-4 w-full justify-center relative">
+                            <!-- Bar 1 -->
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-xs font-bold text-slate-600 transition-all duration-500" id="gate-p1-text">90%</span>
+                                <div id="gate-p1-bar" class="w-12 bg-slate-800 rounded-t transition-all duration-500 ease-in-out" style="height: 80px;"></div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Top 1</span>
+                            </div>
+                            <!-- Bar 2 -->
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-xs font-bold text-slate-600 transition-all duration-500" id="gate-p2-text">5%</span>
+                                <div id="gate-p2-bar" class="w-12 bg-slate-300 rounded-t transition-all duration-500 ease-in-out" style="height: 5px;"></div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Top 2</span>
+                            </div>
+                        </div>
+
+                        <!-- Status Pill -->
+                        <div id="gate-pill" class="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 bg-purple-50 text-purple-700 border border-purple-100">
+                            Confident • SKIP
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MOVED UP: RESULTS SECTION -->
+    <section id="results" class="py-24 bg-white border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Experimental Results</h2>
+                <p class="text-slate-600">
+                    DIRECTER outperforms baselines while maintaining generation quality.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                <!-- Results Table (Left) -->
+                <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                        <h3 class="font-bold text-sm text-slate-800">Benchmark Performance (Accuracy %)</h3>
+                    </div>
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-sm text-left h-full">
+                            <thead>
+                                <tr class="text-xs text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                                    <th class="px-6 py-3 font-semibold">Method</th>
+                                    <th class="px-6 py-3 font-semibold">IFEval</th>
+                                    <th class="px-6 py-3 font-semibold">LIFBench</th>
+                                    <th class="px-6 py-3 font-semibold">GSM8K-F</th>
+                                    <th class="px-6 py-3 font-semibold">AVG</th>
+                                </tr>
+                            </thead>
+                            <!-- Reduced padding (py-3), Removed hover shade -->
+                            <tbody class="divide-y divide-slate-100">
+                                <tr>
+                                    <td class="px-6 py-3 font-medium text-slate-600">Zero-shot</td>
+                                    <td class="px-6 py-3">77.5</td>
+                                    <td class="px-6 py-3">57.6</td>
+                                    <td class="px-6 py-3">80.9</td>
+                                    <td class="px-6 py-3 font-bold text-slate-700">70.0</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-3 font-medium text-slate-600 flex items-center gap-1">
+                                        PASTA 
+                                        <div class="tooltip-container">
+                                            <span class="material-symbols-outlined text-[14px] text-slate-400">info</span>
+                                            <span class="tooltip-text w-64 text-left p-3 font-normal normal-case leading-tight">PASTA (Zhang et al., 2023). Steering via attention head suppression.</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-3">71.1</td>
+                                    <td class="px-6 py-3">48.8</td>
+                                    <td class="px-6 py-3">73.6</td>
+                                    <td class="px-6 py-3 font-bold text-slate-700">62.2</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-3 font-medium text-slate-600 flex items-center gap-1">
+                                        SpotLight
+                                        <div class="tooltip-container">
+                                            <span class="material-symbols-outlined text-[14px] text-slate-400">info</span>
+                                            <span class="tooltip-text w-64 text-left p-3 font-normal normal-case leading-tight">SpotLight (Venkateswaran et al., 2025). Logit biasing to force attention.</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-3">65.5</td>
+                                    <td class="px-6 py-3">49.4</td>
+                                    <td class="px-6 py-3">68.4</td>
+                                    <td class="px-6 py-3 font-bold text-slate-700">59.4</td>
+                                </tr>
+                                <!-- Tuned Rows -->
+                                <tr class="bg-slate-50/30">
+                                    <td class="px-6 py-3 font-medium text-slate-500">
+                                        PASTA* <span class="text-[10px] text-slate-400 block">Tuned</span>
+                                    </td>
+                                    <td class="px-6 py-3">79.9</td>
+                                    <td class="px-6 py-3">58.5</td>
+                                    <td class="px-6 py-3">80.8</td>
+                                    <td class="px-6 py-3 font-bold text-slate-600">71.0</td>
+                                </tr>
+                                <tr class="bg-slate-50/30 border-b-2 border-slate-100">
+                                    <td class="px-6 py-3 font-medium text-slate-500">
+                                        SpotLight* <span class="text-[10px] text-slate-400 block">Tuned</span>
+                                    </td>
+                                    <td class="px-6 py-3">79.9</td>
+                                    <td class="px-6 py-3">57.0</td>
+                                    <td class="px-6 py-3">87.0</td>
+                                    <td class="px-6 py-3 font-bold text-slate-600">72.1</td>
+                                </tr>
+                                <!-- DIRECTER -->
+                                <tr class="bg-indigo-50/60">
+                                    <td class="px-6 py-3 font-bold text-indigo-700">DIRECTER</td>
+                                    <td class="px-6 py-3 font-bold text-indigo-600">81.8</td>
+                                    <td class="px-6 py-3 font-bold text-indigo-600">62.0</td>
+                                    <td class="px-6 py-3 font-bold text-indigo-600">93.0</td>
+                                    <td class="px-6 py-3 font-bold text-indigo-700">76.5</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right Column (Split) -->
+                <div class="lg:col-span-5 flex flex-col gap-6 h-full">
+                    
+                    <!-- Mitigation Chart Panel -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex-1">
+                        <div class="mb-4">
+                            <h3 class="font-bold text-sm text-slate-800">Mitigating Oversteering</h3>
+                            <p class="text-xs text-slate-500 mt-1">Applying DIRECTER's plausibility filter significantly improves other methods.</p>
+                        </div>
+                        <div class="relative h-32 w-full">
+                            <canvas id="mitigationChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Efficiency Panel -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                        <div class="mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-emerald-500">bolt</span>
+                            <h3 class="font-bold text-sm text-slate-800">Inference Efficiency</h3>
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-4 mb-4 h-auto">
+                            <!-- Throughput Comparison Chart -->
+                            <div class="flex-1 h-16 relative min-w-[150px]">
+                                <canvas id="efficiencyChart"></canvas>
+                            </div>
+                            <!-- Stats -->
+                            <div class="flex gap-2">
+                                <div class="bg-slate-50 p-2 px-3 rounded-lg border border-slate-100 text-center min-w-[70px]">
+                                    <span class="text-xl font-bold text-slate-800">90%</span>
+                                    <span class="text-[9px] text-slate-500 block uppercase tracking-wide font-semibold">Throughput</span>
+                                </div>
+                                <div class="bg-slate-50 p-2 px-3 rounded-lg border border-slate-100 text-center min-w-[70px]">
+                                    <span class="text-xl font-bold text-slate-800">0</span>
+                                    <span class="text-[9px] text-slate-500 block uppercase tracking-wide font-semibold">Extra Data</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-slate-600 space-y-2 pt-2 border-t border-slate-100">
+                            <p class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>
+                                Fully compatible with FlashAttention
+                            </p>
+                            <p class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span>
+                                No pre-computation or extra data required
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MOVED DOWN: BACKGROUND SECTION -->
+    <section id="concepts" class="py-24 bg-slate-50 border-y border-slate-200">
+        <div class="max-w-6xl mx-auto px-4">
+            <h2 class="text-4xl font-bold text-slate-900 mb-12 text-center">Background</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <!-- KV Cache -->
+                <div class="group h-full">
+                    <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 h-full hover:shadow-md transition-shadow flex flex-col overflow-hidden">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
+                                <span class="material-symbols-outlined">memory</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-900">KV Cache Steering</h3>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl p-8 mb-6 flex flex-col items-center justify-center min-h-[200px] border border-slate-100 relative overflow-hidden">
+                            <div class="flex gap-4 items-center z-10">
+                                <!-- Memory Blocks -->
+                                <div class="flex flex-col gap-1">
+                                    <div class="w-12 h-8 bg-slate-200 rounded border border-slate-300 flex items-center justify-center text-[10px] text-slate-500 font-mono">K1</div>
+                                    <div class="w-12 h-8 bg-slate-200 rounded border border-slate-300 flex items-center justify-center text-[10px] text-slate-500 font-mono">V1</div>
+                                </div>
+                                <div class="text-slate-300">...</div>
+                                <div class="flex flex-col gap-1 relative group">
+                                    <div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded whitespace-nowrap shadow-sm animate-bounce">Target</div>
+                                    <div class="w-14 h-10 bg-blue-100 rounded border-2 border-blue-500 flex items-center justify-center text-xs text-blue-700 font-bold font-mono shadow-md">Key*</div>
+                                    <div class="w-14 h-8 bg-slate-200 rounded border border-slate-300 flex items-center justify-center text-[10px] text-slate-500 font-mono">Val</div>
+                                </div>
+                                <div class="text-slate-300">...</div>
+                                <div class="flex flex-col gap-1">
+                                    <div class="w-12 h-8 bg-slate-200 rounded border border-slate-300 flex items-center justify-center text-[10px] text-slate-500 font-mono">Kt</div>
+                                    <div class="w-12 h-8 bg-slate-200 rounded border border-slate-300 flex items-center justify-center text-[10px] text-slate-500 font-mono">Vt</div>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-4 text-center max-w-xs">DIRECTER amplifies specific "Key" vectors in the model's memory to force attention on instruction tokens.</p>
+                        </div>
+                        <p class="text-slate-600 leading-relaxed text-sm mt-auto">
+                            Instead of modifying weights, DIRECTER modifies KV Cache of instruction tokens by amplifying their key vectors. This helps the model's attention mechanism to focus on given constraints during generation.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Vector Steering -->
+                <div class="group h-full">
+                    <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 h-full hover:shadow-md transition-shadow flex flex-col overflow-hidden">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
+                                <span class="material-symbols-outlined">move_selection_right</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-900">Activation Steering</h3>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl p-6 mb-6 h-[200px] flex items-center justify-center relative overflow-hidden border border-slate-100">
+                            <div class="w-2 h-2 bg-slate-400 rounded-full absolute left-[20%] bottom-[20%] z-10"></div>
+                            <!-- Vectors -->
+                            <div class="absolute left-[20%] bottom-[20%] h-0.5 bg-slate-300 w-32 origin-left -rotate-12 rounded flex items-center">
+                                <span class="absolute -top-5 right-0 text-[10px] text-slate-400 font-bold uppercase whitespace-nowrap">Original</span>
+                            </div>
+                            <div class="absolute left-[20%] bottom-[20%] h-0.5 bg-blue-400 w-24 origin-left -rotate-[60deg] rounded flex items-center border-b border-dashed border-blue-400 bg-transparent opacity-70">
+                                <span class="absolute -top-5 left-4 text-[10px] text-blue-500 font-bold uppercase whitespace-nowrap">Steering Vector</span>
+                            </div>
+                            <div class="absolute left-[20%] bottom-[20%] h-1 bg-emerald-500 w-36 origin-left -rotate-[35deg] rounded flex items-center shadow-lg shadow-emerald-200 z-20 group-hover:w-40 transition-all duration-300">
+                                <span class="absolute -top-6 right-0 text-[10px] text-emerald-600 font-bold uppercase bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 whitespace-nowrap">Final Output</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-600 leading-relaxed text-sm mt-auto">
+                            Think of the model's state as a vector. Steering adds a "Constraint Vector". DIRECTER dynamically adjusts the length of this steering vector based on plausibility, ensuring the final output doesn't deviate too far into incoherence.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-16 border-t border-slate-800">
+        <div class="max-w-4xl mx-auto px-4">
+            <!-- Citation -->
+            <div class="mb-12">
+                <h4 class="text-white font-bold mb-4 uppercase tracking-wider text-sm">Citation</h4>
+                <!-- Changed container to flex center -->
+                <div class="bg-slate-800 p-6 rounded-xl relative group border border-slate-700 h-44 overflow-hidden flex items-center">
+                    <!-- Changed from textarea to div/code for centering -->
+                    <div id="citation-content" class="citation-content w-full text-slate-400 select-all">@article{directer2025,
+  title={Enhancing Instruction Following of LLMs via Activation Steering with Dynamic Rejection},
+  author={Anonymous},
+  journal={Preprint},
+  year={2025}
+}</div>
+                    <button onclick="copyCitation(this)" class="absolute top-4 right-4 bg-slate-700 hover:bg-slate-600 text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Contact -->
+            <div class="mb-12">
+                <h4 class="text-white font-bold mb-4 uppercase tracking-wider text-sm">Contact</h4>
+                <ul class="space-y-3 text-sm">
+                    <li class="flex items-center gap-3 group">
+                        <div class="bg-slate-800 p-2 rounded-lg group-hover:bg-slate-700 transition-colors">
+                            <span class="material-symbols-outlined text-slate-400 text-sm">mail</span>
+                        </div>
+                        <a href="mailto:kminjae618@gmail.com" class="hover:text-white transition-colors">kminjae618@gmail.com</a>
+                    </li>
+                    <li class="flex items-center gap-3 group">
+                        <div class="bg-slate-800 p-2 rounded-lg group-hover:bg-slate-700 transition-colors">
+                            <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" class="w-4 h-4 invert opacity-50" alt="GitHub">
+                        </div>
+                        <a href="https://github.com/mjk0618/directer" target="_blank" class="hover:text-white transition-colors">github.com/mjk0618/directer</a>
+                    </li>
+                </ul>
+                <p class="text-xs text-slate-500 mt-4">
+                    For any questions, please email the author or report an issue on the repository.
+                </p>
+            </div>
+
+            <div class="text-center text-xs text-slate-600 pt-8 border-t border-slate-800">
+                © 2025 Project DIRECTER.
+            </div>
+        </div>
+    </footer>
+
+    <!-- --- SCRIPTS --- -->
+    <script>
+        function copyCitation(btn) {
+            const content = document.getElementById('citation-content').innerText;
+            const iconSpan = btn.querySelector('span'); // Get the icon span
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(content).then(() => {
+                    showSuccessFeedback(iconSpan);
+                }).catch(err => {
+                    console.error('Clipboard API failed', err);
+                    fallbackCopyDiv(iconSpan);
+                });
+            } else {
+                fallbackCopyDiv(iconSpan);
+            }
+        }
+
+        function fallbackCopyDiv(iconSpan) {
+            const range = document.createRange();
+            range.selectNode(document.getElementById('citation-content'));
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            try {
+                document.execCommand('copy');
+                window.getSelection().removeAllRanges();
+                showSuccessFeedback(iconSpan);
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+        }
+        
+        function showSuccessFeedback(iconSpan) {
+            if (!iconSpan) return;
+            const originalText = 'content_copy';
+            iconSpan.innerText = 'check'; // Change to check icon
+            iconSpan.classList.add('text-green-400'); // Optional: Add color for feedback
+
+            setTimeout(() => {
+                iconSpan.innerText = originalText; // Revert
+                iconSpan.classList.remove('text-green-400');
+            }, 2000);
+        }
+
+        // --- Mitigation Chart Logic ---
+        const ctx = document.getElementById('mitigationChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['PASTA', 'SpotLight'],
+                datasets: [
+                    {
+                        label: 'Original',
+                        data: [72.8, 68.8],
+                        backgroundColor: '#94a3b8',
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    },
+                    {
+                        label: '+ DIRECTER Filter',
+                        data: [78.2, 79.3],
+                        backgroundColor: '#6366f1',
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 8 } },
+                    tooltip: { callbacks: { label: (c) => `${c.raw}% Accuracy` } }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { min: 60, grid: { borderDash: [4, 4], color: '#e2e8f0' }, ticks: { font: {size: 10} } }
+                }
+            }
+        });
+
+        // --- Efficiency Chart Logic ---
+        const ctxEff = document.getElementById('efficiencyChart').getContext('2d');
+        new Chart(ctxEff, {
+            type: 'bar',
+            data: {
+                labels: ['Zero-shot', 'DIRECTER', 'SpotLight'],
+                datasets: [{
+                    label: 'Tokens/Sec (Norm)',
+                    data: [100, 90, 45],
+                    backgroundColor: ['#cbd5e1', '#10b981', '#f87171'],
+                    borderRadius: 4,
+                    barThickness: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.raw}% Speed` } } },
+                scales: { x: { display: false, max: 110 }, y: { grid: { display: false } } }
+            }
+        });
+
+        // --- Method Animations ---
+        const rankContainer = document.getElementById('ranking-container');
+        const rankStatus = document.getElementById('ranking-status');
+        const numMethodLayers = 4;
+        let layerEls = [];
+
+        function initMethodAnimation() {
+            rankContainer.innerHTML = '';
+            layerEls = [];
+            for(let i=0; i<numMethodLayers; i++) {
+                const el = document.createElement('div');
+                const sensitivity = Math.random();
+                const width = 20 + (sensitivity * 75); 
+                
+                el.className = "absolute left-0 right-0 h-8 flex items-center gap-3 px-2 transition-all duration-1000 ease-in-out";
+                el.style.top = `${i * 40}px`;
+                el.dataset.index = i;
+                el.dataset.score = sensitivity;
+
+                el.innerHTML = `
+                    <div class="w-6 h-6 bg-slate-50 rounded flex items-center justify-center text-[10px] font-mono text-slate-500 border border-slate-200">L${i+1}</div>
+                    <div class="flex-1 h-2 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                        <div class="h-full bg-blue-500 opacity-0 transition-all duration-1000" style="width: ${width}%"></div>
+                    </div>
+                    <div class="w-8 text-[10px] font-mono text-slate-400 text-right opacity-0 transition-opacity duration-500">${sensitivity.toFixed(2)}</div>
+                `;
+                rankContainer.appendChild(el);
+                layerEls.push(el);
+            }
+            runMethodLoop();
+            runGateLoop();
+        }
+
+        async function runMethodLoop() {
+            while(true) {
+                rankStatus.textContent = "Step 1: Initial Order (Index)";
+                rankStatus.className = "text-[10px] font-bold uppercase tracking-widest text-slate-400";
+                layerEls.forEach((el, i) => {
+                    el.style.top = `${i * 40}px`;
+                    el.querySelector('.bg-blue-500').classList.add('opacity-0');
+                    el.lastElementChild.classList.add('opacity-0');
+                });
+                await new Promise(r => setTimeout(r, 2000));
+
+                rankStatus.textContent = "Step 2: Calculate Sensitivity";
+                rankStatus.className = "text-[10px] font-bold uppercase tracking-widest text-blue-500 animate-pulse";
+                layerEls.forEach(el => {
+                    el.querySelector('.bg-blue-500').classList.remove('opacity-0');
+                    el.lastElementChild.classList.remove('opacity-0');
+                });
+                await new Promise(r => setTimeout(r, 2000));
+
+                rankStatus.textContent = "Step 3: Reorder (Ranked)";
+                rankStatus.className = "text-[10px] font-bold uppercase tracking-widest text-indigo-500";
+                const sorted = [...layerEls].sort((a, b) => parseFloat(b.dataset.score) - parseFloat(a.dataset.score));
+                sorted.forEach((el, idx) => {
+                    el.style.top = `${idx * 40}px`;
+                });
+                await new Promise(r => setTimeout(r, 4000));
+            }
+        }
+
+        async function runGateLoop() {
+            const p1Bar = document.getElementById('gate-p1-bar');
+            const p2Bar = document.getElementById('gate-p2-bar');
+            const p1Text = document.getElementById('gate-p1-text');
+            const p2Text = document.getElementById('gate-p2-text');
+            const pill = document.getElementById('gate-pill');
+
+            while(true) {
+                p1Bar.style.height = "80px";
+                p2Bar.style.height = "5px";
+                p1Text.innerText = "90%";
+                p2Text.innerText = "5%";
+                pill.innerText = "Confident • SKIP";
+                pill.className = "px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 bg-purple-50 text-purple-700 border border-purple-100";
+                await new Promise(r => setTimeout(r, 3000));
+
+                p1Bar.style.height = "45px";
+                p2Bar.style.height = "40px";
+                p1Text.innerText = "50%";
+                p2Text.innerText = "45%";
+                pill.innerText = "Uncertain • STEER";
+                pill.className = "px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 bg-slate-100 text-slate-500 border border-slate-200";
+                await new Promise(r => setTimeout(r, 3000));
+            }
+        }
+
+        const SCENARIOS = {
+            shakespeare: {
+                name: "Shakespeare - No Commas",
+                constraint: "Write an itinerary for a trip to Japan without using any commas.",
+                fontClass: "font-serif",
+                tokens: [
+                    { 
+                        id: 1, text: "Fair", 
+                        raw: { top: "Fair", prob: 0.9, others: [{t:"The", p:0.05}, {t:"Oh", p:0.02}] },
+                        steered: { top: "Fair", prob: 0.95, others: [{t:"Verily", p:0.03}, {t:"Hark", p:0.01}] },
+                        outcome: "accept", strength: 32, reason: "Token 'Fair' is plausible."
+                    },
+                    { 
+                        id: 2, text: " traveler", 
+                        raw: { top: " traveler", prob: 0.8, others: [{t:" one", p:0.1}] },
+                        steered: { top: " traveler", prob: 0.85, others: [{t:" wanderer", p:0.1}] },
+                        outcome: "accept", strength: 32, reason: "Context continues naturally."
+                    },
+                    { 
+                        id: 3, text: " thou", 
+                        raw: { top: ",", prob: 0.55, others: [{t:" who", p:0.4}] }, 
+                        steered_initial: { top: " Verily", prob: 0.92, others: [{t:" I", p:0.05}] }, 
+                        steered_final: { top: " thou", prob: 0.75, others: [{t:" who", p:0.15}] },   
+                        outcome: "reject_then_accept", strength: 16, 
+                        reason: "Rejected 'Verily' (Oversteered). Adjusted."
+                    },
+                    { 
+                        id: 4, text: " seekest", 
+                        raw: { top: " seek", prob: 0.5, others: [{t:" look", p:0.3}] },
+                        steered: { top: " seekest", prob: 0.85, others: [{t:" dost", p:0.1}] },
+                        outcome: "accept", strength: 32, reason: "Style adjustment accepted."
+                    },
+                    { 
+                        id: 5, text: " to", 
+                        raw: { top: " to", prob: 0.9, others: [{t:" a", p:0.05}] },
+                        steered: { top: " to", prob: 0.9, others: [{t:" embark", p:0.05}] },
+                        outcome: "skip", strength: 0, reason: "Raw model confident. Skipped."
+                    },
+                    { 
+                        id: 6, text: " Japan", 
+                        raw: { top: " distant", prob: 0.5, others: [{t:" Japan", p:0.4}] },
+                        steered: { top: " Japan", prob: 0.8, others: [{t:" far", p:0.1}] },
+                        outcome: "accept", strength: 32, reason: "Steering accepted."
+                    },
+                    { 
+                        id: 7, text: "'s", 
+                        raw: { top: "'s", prob: 0.9, others: [{t:"ese", p:0.05}] },
+                        steered: { top: "'s", prob: 0.95, others: [{t:"ese", p:0.02}] },
+                        outcome: "accept", strength: 32, reason: ""
+                    }
+                ]
+            },
+            json: {
+                name: "JSON Math",
+                constraint: "Output strictly valid JSON format.",
+                fontClass: "font-mono",
+                tokens: [
+                    { id:1, text: "{", outcome: "accept", strength: 32, raw:{top:"Here", prob:0.45, others:[{t:"Sure", p:0.3}]}, steered:{top:"{", prob:0.99}, reason: "Forcing JSON start." },
+                    { id:2, text: "\n", outcome: "skip", strength: 0, raw:{top:"\n", prob:0.9, others:[{t:" ", p:0.05}]}, steered:{top:"\n", prob:0.9}, reason: "Confidence skip." },
+                    { id:3, text: '  "answer"', outcome: "accept", strength: 32, raw:{top:" solution", prob:0.5, others:[{t:" answer", p:0.4}]}, steered:{top:'  "answer"', prob:0.9}, reason: "Enforcing schema." },
+                    { id:4, text: ":", outcome: "skip", strength: 0, raw:{top:":", prob:0.99, others:[]}, steered:{top:":", prob:0.99}, reason: "Confidence skip." },
+                    { 
+                        id:5, text: " 42", outcome: "reject_then_accept", strength: 8, 
+                        raw:{top:" 42", prob:0.55, others:[{t:" 42.0", p:0.3}]}, 
+                        steered_initial:{top:' "forty-two"', prob:0.7}, 
+                        steered_final:{top:" 42", prob:0.9}, 
+                        reason: "Rejected string format. Numeric required." 
+                    },
+                    { id:6, text: "\n}", outcome: "accept", strength: 32, raw:{top:"}", prob:0.95, others:[]}, steered:{top:"}", prob:0.99}, reason: "Closing JSON." }
+                ]
+            }
+        };
+
+        const app = {
+            scenario: null,
+            stepIndex: 0,
+            isPlaying: false,
+            playInterval: null,
+            chart: null,
+            chartData: { labels: [], data: [] },
+            beta: 0.5, 
+            layerRanking: [],
+
+            init() { 
+                this.generateLayerRanking();
+                this.initLayerStack(); 
+                this.initChart(); 
+                this.loadScenario('shakespeare'); 
+            },
+            
+            generateLayerRanking() {
+                this.layerRanking = Array.from({length: 32}, (_, i) => i);
+                let seed = 12345;
+                const random = () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
+                for (let i = this.layerRanking.length - 1; i > 0; i--) {
+                    const j = Math.floor(random() * (i + 1));
+                    [this.layerRanking[i], this.layerRanking[j]] = [this.layerRanking[j], this.layerRanking[i]];
+                }
+            },
+
+            initLayerStack() {
+                const c = document.getElementById('layer-container'); c.innerHTML='';
+                for(let i=0;i<32;i++) { const d=document.createElement('div'); d.className='layer-block layer-inactive w-full flex-1 rounded-sm border border-white/5'; d.id=`layer-${i}`; c.appendChild(d); }
+            },
+            
+            initChart() {
+                const ctx = document.getElementById('steeringChart').getContext('2d');
+                this.chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ label: 'Layers', data: [], borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.1)', borderWidth: 2, tension: 0.2, fill: true, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} }, scales: { y: {min:0, max:33, grid:{color:'#334155'}, ticks:{display:false}}, x: {display:false} }, animation: {duration:0} } });
+            },
+            
+            loadScenario(id) {
+                this.reset(); 
+                this.scenario = SCENARIOS[id];
+                const active="flex-1 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white bg-orange-600 rounded hover:bg-orange-500 transition-colors";
+                const inactive="flex-1 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700 transition-colors";
+                const btnS=document.getElementById('btn-scenario-shakespeare'), btnJ=document.getElementById('btn-scenario-json');
+                if(id==='shakespeare'){btnS.className=active;btnJ.className=inactive;}else{btnS.className=inactive;btnJ.className=active;}
+                document.getElementById('scenario-title').textContent=this.scenario.name;
+                document.getElementById('scenario-desc').textContent=this.scenario.constraint;
+                document.getElementById('output-text').className=`flex-1 p-3 text-sm leading-relaxed text-slate-200 overflow-y-auto custom-scrollbar whitespace-pre-wrap font-mono ${this.scenario.fontClass}`;
+                this.log(`Loaded: ${this.scenario.name}`);
+            },
+            
+            reset() {
+                this.pause(); this.stepIndex=0; document.getElementById('output-text').textContent=""; document.getElementById('event-log').innerHTML="";
+                this.chartData={labels:[],data:[]}; this.chart.data.labels=[]; this.chart.data.datasets[0].data=[]; this.chart.update();
+                this.updateLayerVisuals(0); this.clearDistributions(); this.setDecision('WAITING','bg-slate-800','text-slate-500'); this.showOverlay('reject-overlay',false); this.showOverlay('skip-overlay',false);
+            },
+            
+            togglePlay() { if(this.isPlaying) this.pause(); else this.play(); },
+            play() { this.isPlaying=true; document.getElementById('icon-play').textContent='pause'; document.getElementById('text-play').textContent='Pause'; document.getElementById('btn-play').classList.replace('bg-blue-600','bg-slate-600'); if(this.stepIndex>=this.scenario.tokens.length) this.reset(); this.processStep(); },
+            pause() { this.isPlaying=false; clearTimeout(this.playInterval); document.getElementById('icon-play').textContent='play_arrow'; document.getElementById('text-play').textContent='Auto'; document.getElementById('btn-play').classList.replace('bg-slate-600','bg-blue-600'); },
+            step() { this.pause(); if(this.stepIndex>=this.scenario.tokens.length) return; this.processStep(); },
+            
+            async processStep() {
+                if (!this.scenario || !this.scenario.tokens || this.stepIndex >= this.scenario.tokens.length) {
+                    this.pause();
+                    return;
+                }
+
+                const t = this.scenario.tokens[this.stepIndex];
+                this.showOverlay('skip-overlay',false); this.showOverlay('reject-overlay',false);
+                
+                this.renderDistribution('raw',t.raw); this.renderDistribution('steered',null); 
+                this.updateLayerVisuals(0);
+                await this.wait(600);
+                
+                const p1 = t.raw.prob;
+                const p2 = (t.raw.others && t.raw.others.length > 0) ? t.raw.others[0].p : 0;
+                
+                if (p2 <= this.beta * p1) { 
+                    this.setDecision('SKIPPED','bg-slate-700','text-slate-400'); 
+                    this.showOverlay('skip-overlay',true); 
+                    this.log(`Step ${this.stepIndex+1}: Skipped (Confident)`); 
+                    await this.wait(800); 
+                    this.finalizeToken(t.text,0); 
+                    return;
+                }
+
+                let currentStrength = 32;
+                let currentSteeredData = t.outcome==='reject_then_accept'?t.steered_initial:t.steered;
+                
+                this.updateLayerVisuals(currentStrength);
+                this.renderDistribution('steered',currentSteeredData); 
+                await this.wait(800);
+                
+                this.setDecision('ANALYZING...','bg-yellow-900','text-yellow-200'); 
+                await this.wait(600);
+                
+                if(t.outcome==='reject_then_accept') {
+                    this.setDecision('IMPLAUSIBLE','bg-red-900','text-red-200'); 
+                    document.getElementById('reject-reason').textContent=`Oversteered to "${currentSteeredData.top.trim()}"`; 
+                    this.showOverlay('reject-overlay',true); 
+                    this.log(`Step ${this.stepIndex+1}: REJECTED "${currentSteeredData.top.trim()}"`); 
+                    await this.wait(1500); 
+                    this.showOverlay('reject-overlay',false);
+                    
+                    currentStrength = t.strength;
+                    this.updateLayerVisuals(currentStrength); 
+                    this.log(`Step ${this.stepIndex+1}: Strength reduced to ${currentStrength}`); 
+                    this.renderDistribution('steered',t.steered_final); 
+                    await this.wait(800);
+                }
+                
+                if (t.outcome === 'accept') {
+                    this.log(`Step ${this.stepIndex+1}: Steered (Accepted)`);
+                }
+                
+                this.setDecision('ACCEPTED','bg-green-900','text-green-200'); 
+                this.finalizeToken(t.text,currentStrength);
+            },
+            
+            finalizeToken(txt,s) {
+                const el=document.getElementById('output-text'); 
+                const sp=document.createElement('span'); 
+                sp.textContent=txt; 
+                sp.className="animate-pulse bg-orange-500/20"; 
+                el.appendChild(sp); 
+                el.scrollTop=el.scrollHeight; 
+                setTimeout(()=>sp.classList.remove("animate-pulse","bg-orange-500/20"),500);
+                
+                this.updateChart(s); 
+                this.stepIndex++; 
+                
+                if(this.isPlaying) {
+                    if (this.scenario && this.stepIndex < this.scenario.tokens.length) {
+                        this.playInterval = setTimeout(() => this.processStep(), 1000);
+                    } else {
+                        this.pause();
+                        this.log("Generation Complete.");
+                    }
+                }
+            },
+            
+            updateLayerVisuals(count) { 
+                document.getElementById('steering-strength').textContent=count; 
+                const activeIndices = new Set();
+                for(let i=0; i<count; i++) activeIndices.add(this.layerRanking[i]);
+
+                for(let i=0;i<32;i++){ 
+                    const el=document.getElementById(`layer-${i}`); 
+                    const isActive = activeIndices.has(i);
+                    el.className=`layer-block w-full flex-1 rounded-sm border border-white/5 ${isActive?'layer-active':'layer-inactive'}`; 
+                } 
+            },
+            
+            renderDistribution(type,data) {
+                const container = document.getElementById(`${type}-dist-chart`);
+                const label = document.getElementById(`${type}-top-token`);
+                container.innerHTML = '';
+                
+                container.className = "flex items-start gap-6 border-b border-slate-600/50 pb-2 min-h-[3.5rem] relative"; 
+
+                if (!data) {
+                    label.style.opacity = 0;
+                    return;
+                }
+
+                const safeTopLabel = data.top.replace(/\n/g, '\\n').replace(/^ /, '_');
+                label.textContent = `Top: "${safeTopLabel}"`;
+                label.style.opacity = 1;
+
+                const items = [{t: data.top, p: data.prob}, ...(data.others || [])];
+
+                items.forEach((item, idx) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = "flex flex-col items-start gap-0.5 fade-enter min-w-[2rem]";
+                    
+                    const displayToken = item.t.replace(/\n/g, '\\n').replace(/^ /, '_');
+                    const prob = Math.round(item.p * 100) + "%";
+                    
+                    const probColor = type === 'raw' ? (idx === 0 ? 'text-blue-400' : 'text-slate-500') 
+                                                     : (idx === 0 ? 'text-orange-400' : 'text-slate-500');
+                    
+                    wrapper.innerHTML = `
+                        <div class="text-[10px] font-mono text-slate-400 truncate max-w-[4rem]" title="${item.t}">"${displayToken}"</div>
+                        <div class="text-sm font-bold ${probColor}">${prob}</div>
+                    `;
+                    container.appendChild(wrapper);
+                    setTimeout(() => wrapper.classList.add('fade-enter-active'), 50 * idx);
+                });
+            },
+            
+            clearDistributions() { document.getElementById('raw-dist-chart').innerHTML=''; document.getElementById('steered-dist-chart').innerHTML=''; document.getElementById('raw-top-token').style.opacity=0; document.getElementById('steered-top-token').style.opacity=0; },
+            setDecision(t,bg,txt) { const el=document.getElementById('decision-indicator'); el.className=`w-20 h-10 rounded flex items-center justify-center border border-slate-600 transition-all duration-300 transform ${bg}`; el.innerHTML=`<span class="text-[10px] font-bold ${txt}\">${t}</span>`; if(t.includes('...'))el.classList.add('animate-pulse');else el.classList.remove('animate-pulse'); },
+            showOverlay(id,show) { const el=document.getElementById(id); if(show)el.classList.remove('opacity-0','pointer-events-none');else el.classList.add('opacity-0','pointer-events-none'); },
+            updateChart(val) { this.chartData.labels.push(this.stepIndex); this.chartData.data.push(val); this.chart.data.labels=this.chartData.labels; this.chart.data.datasets[0].data=this.chartData.data; this.chart.update(); },
+            log(msg) { const l=document.getElementById('event-log'), i=document.createElement('li'); i.className="border-l-2 border-slate-600 pl-3 py-1 text-slate-300 text-[10px] font-mono leading-tight"; i.textContent=msg; l.prepend(i); },
+            wait(ms) { return new Promise(r=>setTimeout(r,ms)); }
+        };
+
+        window.onload = () => { app.init(); initMethodAnimation(); if(window.MathJax) MathJax.typesetPromise(); };
+    </script>
+</body>
+</html>
