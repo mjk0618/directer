@@ -142,13 +142,24 @@
             margin: 0 !important;
             vertical-align: middle !important;
         }
+
+        /* NEW ANIMATION STYLES FOR FIGURE */
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
+        @keyframes dash { to { stroke-dashoffset: -8; } }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
 
     <!-- Navigation -->
     <nav id="navbar" class="fixed top-0 w-full z-50 glass-panel transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-[88rem] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
                     <span class="material-symbols-outlined text-blue-600 text-3xl">assistant_direction</span>
@@ -157,9 +168,8 @@
                 
                 <div class="hidden md:flex gap-8 text-sm font-medium text-slate-600">
                     <a href="#abstract" class="hover:text-blue-600 transition-colors">Motivation</a>
-                    <a href="#demo" class="hover:text-blue-600 transition-colors">Demo</a>
+                    <a href="#concept-figure" class="hover:text-blue-600 transition-colors">Mechanism</a>
                     <a href="#method" class="hover:text-blue-600 transition-colors">Methodology</a>
-                    <!-- Swapped Order in Nav to match Page Order -->
                     <a href="#results" class="hover:text-blue-600 transition-colors">Results</a>
                     <a href="#concepts" class="hover:text-blue-600 transition-colors">Background</a>
                 </div>
@@ -206,7 +216,7 @@
             </div>
 
             <!-- TL;DR & Abstract Box -->
-            <div class="max-w-3xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm text-left mb-8 overflow-hidden">
+            <div class="max-w-4xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm text-left mb-8 overflow-hidden">
                 <div class="p-6 pb-4">
                     <div class="flex items-start gap-4 mb-2">
                         <span class="material-symbols-outlined text-indigo-500 mt-1 fill-current">lightbulb</span>
@@ -258,7 +268,7 @@
 
     <!-- Motivation -->
     <section id="abstract" class="py-20 bg-white border-y border-slate-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-[88rem] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
                 <div>
                     <div class="mb-6">
@@ -266,10 +276,10 @@
                         <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight">The Oversteering Problem</h2>
                     </div>
                     
-                    <p class="text-lg text-slate-600 mb-6 leading-relaxed">
+                    <p class="text-base text-slate-600 mb-6 leading-relaxed">
                         While instruction tuning has advanced LLMs, they still struggle with complex constraints. Activation steering offers a training-free solution by manipulating internal states, but it suffers from a critical flaw: <strong>Oversteering</strong>.
                     </p>
-                    <p class="text-lg text-slate-600 leading-relaxed">
+                    <p class="text-base text-slate-600 leading-relaxed">
                         Static steering often forces the model to fixate on instructions at the expense of coherence or task fidelity. DIRECTER addresses this by introducing a <strong>dynamic rejection mechanism</strong> that acts as a safety valve, ensuring steering is applied only when it is plausible to the underlying model.
                     </p>
                 </div>
@@ -284,7 +294,6 @@
                             <span class="text-xs text-slate-400 font-mono ml-auto">Impact of Steering</span>
                         </div>
 
-                        <!-- ADDED: User Prompt Section -->
                         <div class="mb-5 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="material-symbols-outlined text-slate-400 text-sm">account_circle</span>
@@ -332,8 +341,207 @@
         </div>
     </section>
 
-    <!-- INTERACTIVE DEMO SECTION -->
-    <section id="demo" class="py-24 bg-slate-900 text-white relative overflow-hidden">
+    <!-- NEW: CONCEPT FIGURE SECTION (UPDATED) -->
+    <section id="concept-figure" class="py-24 bg-slate-50 border-b border-slate-200 overflow-hidden">
+        <div class="max-w-[88rem] mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center mb-16">
+                <span class="text-indigo-600 font-bold tracking-widest uppercase text-xs mb-2 block">Mechanism</span>
+                <h2 class="text-4xl font-bold text-slate-900">Plausibility-Guided Decoding</h2>
+                <p class="text-slate-600 mt-4 max-w-3xl mx-auto leading-relaxed">
+                    Unlike static steering, DIRECTER creates a feedback loop during inference. It dynamically rejects "Oversteering" by checking if the steered output is plausible to the base model.
+                </p>
+            </div>
+    
+            <div class="relative bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-indigo-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-blue-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+    
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-8">
+                    
+                    <!-- LEFT: Visualization Stage -->
+                    <div class="lg:col-span-7 p-8 lg:p-12 flex flex-col items-center justify-center bg-slate-50/50 border-r border-slate-100 relative min-h-[500px]">
+                        
+                        <!-- 1. DYNAMIC VIEW (Animated) -->
+                        <div id="viz-anim-view" class="w-full flex flex-col items-center">
+                            <div class="relative w-full max-w-lg aspect-video flex items-center justify-between gap-4 select-none">
+                                
+                                <!-- Input -->
+                                <div class="flex flex-col items-center gap-2 z-10 w-24 shrink-0">
+                                    <div class="w-12 h-12 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-slate-400">description</span>
+                                    </div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Prompt</span>
+                                </div>
+        
+                                <!-- Arrow 1 -->
+                                <div class="flex-1 h-0.5 bg-slate-200 relative overflow-hidden rounded-full">
+                                    <div class="absolute inset-0 bg-slate-400 -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                                </div>
+        
+                                <!-- Model Stack -->
+                                <div class="relative z-10 flex flex-col items-center gap-2 w-32 shrink-0">
+                                    <div class="relative w-24 h-32 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col-reverse p-1 gap-0.5 overflow-hidden transition-all duration-300" id="viz-stack">
+                                        <!-- Layers via JS -->
+                                    </div>
+                                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                                        KV Cache
+                                        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" id="viz-status-dot"></span>
+                                    </span>
+                                    
+                                    <div class="absolute -right-28 top-1/2 -translate-y-1/2 text-[10px] font-mono text-indigo-500 opacity-0 transition-opacity duration-300 whitespace-nowrap bg-white/80 backdrop-blur px-2 py-1 rounded border border-indigo-100 shadow-sm" id="viz-strength-label">
+                                        Steering...
+                                    </div>
+                                </div>
+        
+                                <!-- Arrow 2 -->
+                                <div class="flex-1 h-0.5 bg-slate-200 relative rounded-full"></div>
+        
+                                <!-- Gate -->
+                                <div class="relative z-10 flex flex-col items-center gap-2 w-28 shrink-0">
+                                    <div class="w-14 h-14 bg-white rounded-lg border-2 border-slate-200 shadow-sm flex items-center justify-center relative transition-all duration-300 transform" id="viz-gate">
+                                        <span class="material-symbols-outlined text-slate-300 text-2xl transition-colors duration-300" id="viz-gate-icon">search_check</span>
+                                        <svg class="absolute top-1/2 right-full w-32 h-20 -translate-y-1/2 pointer-events-none opacity-0 transition-opacity duration-300" id="viz-feedback-arrow" viewBox="0 0 120 60" style="right: 50px; top: 50%;">
+                                            <path d="M 110 30 C 60 30, 60 80, 10 35" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="4 4" class="animate-[dash_1s_linear_infinite]" />
+                                            <polygon points="10,35 18,32 18,38" fill="#ef4444" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Plausibility<br>Check</span>
+                                </div>
+        
+                                <!-- Output -->
+                                <div class="absolute -top-12 right-0 opacity-0 transition-all duration-500 transform translate-y-4" id="viz-output">
+                                    <div class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg border border-emerald-200 shadow-lg text-xs font-bold flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-base">check_circle</span>
+                                        <div>
+                                            <span class="block text-[9px] uppercase tracking-wider text-emerald-600/70">Generated</span>
+                                            "Mystic"
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-12 text-center h-8 w-full">
+                                <p class="text-sm font-medium text-slate-600 transition-all duration-300 bg-white/50 inline-block px-4 py-1.5 rounded-full border border-slate-100 shadow-sm" id="viz-caption">
+                                    Initializing...
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 2. STATIC VIEW (Hidden by default) -->
+                        <div id="viz-static-view" class="hidden w-full flex-col gap-8">
+                            <!-- Scenario A: Oversteering -->
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm opacity-60">
+                                <div class="flex items-center gap-2 mb-2 text-red-500 font-bold text-xs uppercase tracking-wider">
+                                    <span class="material-symbols-outlined text-sm">close</span> Phase 1: Rejection
+                                </div>
+                                <div class="flex items-center justify-between gap-2 opacity-80">
+                                    <div class="w-16 h-20 bg-slate-100 rounded border border-slate-200 flex flex-col-reverse p-0.5 gap-px">
+                                        <!-- All layers active -->
+                                        <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
+                                        <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
+                                        <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
+                                        <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
+                                    </div>
+                                    <div class="h-0.5 flex-1 bg-red-200"></div>
+                                    <div class="w-10 h-10 rounded border-2 border-red-500 bg-red-50 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-red-500 text-lg">block</span>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-2 text-center">Steering All Layers → Implausible Output</p>
+                            </div>
+
+                            <!-- Scenario B: Success -->
+                            <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-md relative overflow-hidden">
+                                <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-full -mr-8 -mt-8 z-0"></div>
+                                <div class="flex items-center gap-2 mb-2 text-emerald-600 font-bold text-xs uppercase tracking-wider relative z-10">
+                                    <span class="material-symbols-outlined text-sm">check</span> Phase 2: Success
+                                </div>
+                                <div class="flex items-center justify-between gap-2 relative z-10">
+                                    <div class="w-16 h-20 bg-slate-100 rounded border border-slate-200 flex flex-col-reverse p-0.5 gap-px">
+                                        <!-- Top layers active only -->
+                                        <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
+                                        <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
+                                        <div class="flex-1 w-full bg-slate-200 rounded-[1px]"></div>
+                                        <div class="flex-1 w-full bg-slate-200 rounded-[1px]"></div>
+                                    </div>
+                                    <div class="h-0.5 flex-1 bg-emerald-200"></div>
+                                    <div class="w-10 h-10 rounded border-2 border-emerald-500 bg-emerald-50 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-emerald-600 text-lg">check_circle</span>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-2 text-center">Reduced Strength → Plausible Output</p>
+                            </div>
+                        </div>
+    
+                    </div>
+    
+                    <!-- RIGHT: Step-by-Step Context -->
+                    <div class="lg:col-span-5 p-8 lg:p-12 flex flex-col justify-center bg-white relative">
+                        
+                        <!-- UPDATED HEADER & BUTTON LAYOUT -->
+                        <div class="flex items-center justify-between mb-8">
+                            <h3 class="font-bold text-slate-900 flex items-center gap-3 text-lg">
+                                <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600 flex items-center justify-center">
+                                    <span class="material-symbols-outlined">restart_alt</span>
+                                </div>
+                                Decoding Cycle
+                            </h3>
+                            <!-- UPDATED: Fixed width button (w-32) to prevent layout shifts -->
+                            <button onclick="toggleVizView()" id="btn-toggle-viz-view" class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 hover:bg-slate-200 text-slate-600 w-32 py-2 rounded border border-slate-200 transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">visibility</span> Full View
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-8 relative">
+                            <!-- Connecting Line -->
+                            <div class="absolute left-[19px] top-4 bottom-4 w-0.5 bg-slate-100"></div>
+    
+                            <!-- Step 1 -->
+                            <div class="relative pl-12 group transition-opacity duration-500 opacity-30" id="viz-step-1">
+                                <span class="absolute left-0 top-0 w-10 h-10 rounded-full bg-white text-slate-500 text-sm font-bold flex items-center justify-center border-2 border-slate-200 transition-all duration-300 group-[.active]:bg-indigo-600 group-[.active]:text-white group-[.active]:border-indigo-600 shadow-sm z-10">1</span>
+                                <h4 class="text-sm font-bold text-slate-800 mb-1">Raw Pass & Gating</h4>
+                                <p class="text-xs text-slate-500 leading-relaxed">
+                                    First, a <strong>raw forward pass</strong> is performed ($p_t$). If the model is confident (i.e., large probability gap between top-2 tokens), steering is <strong>skipped</strong> for efficiency.
+                                </p>
+                            </div>
+    
+                            <!-- Step 2 -->
+                            <div class="relative pl-12 group transition-opacity duration-500 opacity-30" id="viz-step-2">
+                                <span class="absolute left-0 top-0 w-10 h-10 rounded-full bg-white text-slate-500 text-sm font-bold flex items-center justify-center border-2 border-slate-200 transition-all duration-300 group-[.active]:bg-red-500 group-[.active]:text-white group-[.active]:border-red-500 shadow-sm z-10">2</span>
+                                <h4 class="text-sm font-bold text-slate-800 mb-1">Detect Oversteering</h4>
+                                <p class="text-xs text-slate-500 leading-relaxed">
+                                    If steering is applied, the <strong>Plausibility Gate</strong> compares the steered output ($\tilde{p}_t$) against the raw model ($p_t$). If deviation is too high, it rejects the token.
+                                </p>
+                            </div>
+    
+                            <!-- Step 3 -->
+                            <div class="relative pl-12 group transition-opacity duration-500 opacity-30" id="viz-step-3">
+                                <span class="absolute left-0 top-0 w-10 h-10 rounded-full bg-white text-slate-500 text-sm font-bold flex items-center justify-center border-2 border-slate-200 transition-all duration-300 group-[.active]:bg-emerald-500 group-[.active]:text-white group-[.active]:border-emerald-500 shadow-sm z-10">3</span>
+                                <h4 class="text-sm font-bold text-slate-800 mb-1">Dynamic Adjustment</h4>
+                                <p class="text-xs text-slate-500 leading-relaxed">
+                                    Steering strength is reduced by removing layers. The loop repeats until a plausible token is found, ensuring a balance between instruction following and coherence.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+    
+                </div>
+            </div>
+
+            <!-- CTA to Show Demo -->
+            <div class="mt-12 text-center">
+                <p class="text-slate-500 mb-4 text-sm">Want to explore the distributions in real-time?</p>
+                <button onclick="toggleDemoSection()" id="btn-launch-demo" class="inline-flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold transition-all shadow-lg shadow-indigo-200 group transform hover:-translate-y-0.5">
+                    <span class="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">rocket_launch</span>
+                    Launch Interactive Demo
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERACTIVE DEMO SECTION (Initially Hidden) -->
+    <section id="demo" class="py-24 bg-slate-900 text-white relative overflow-hidden hidden opacity-0 transition-all duration-700">
         <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"></div>
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -492,9 +700,9 @@
         </div>
     </section>
 
-    <!-- METHODOLOGY SECTION -->
+    <!-- Methodology -->
     <section id="method" class="py-24 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-[88rem] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mb-16 text-center">
                 <h2 class="text-4xl font-bold text-slate-900 mb-4">Method Breakdown</h2>
                 <p class="text-lg text-slate-600 max-w-3xl mx-auto">
@@ -567,9 +775,9 @@
         </div>
     </section>
 
-    <!-- MOVED UP: RESULTS SECTION -->
+    <!-- Results Section -->
     <section id="results" class="py-24 bg-white border-t border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-[88rem] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h2 class="text-4xl font-bold text-slate-900 mb-4">Experimental Results</h2>
                 <p class="text-slate-600">
@@ -579,11 +787,11 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                 <!-- Results Table (Left) -->
-                <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full relative z-10">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 rounded-t-xl">
                         <h3 class="font-bold text-sm text-slate-800">Benchmark Performance (Accuracy %)</h3>
                     </div>
-                    <div class="overflow-x-auto flex-1">
+                    <div class="flex-1 overflow-visible">
                         <table class="w-full text-sm text-left h-full">
                             <thead>
                                 <tr class="text-xs text-slate-400 uppercase tracking-wider border-b border-slate-100">
@@ -594,7 +802,6 @@
                                     <th class="px-6 py-3 font-semibold">AVG</th>
                                 </tr>
                             </thead>
-                            <!-- Reduced padding (py-3), Removed hover shade -->
                             <tbody class="divide-y divide-slate-100">
                                 <tr>
                                     <td class="px-6 py-3 font-medium text-slate-600">Zero-shot</td>
@@ -603,12 +810,15 @@
                                     <td class="px-6 py-3">80.9</td>
                                     <td class="px-6 py-3 font-bold text-slate-700">70.0</td>
                                 </tr>
+                                
+                                <!-- PASTA Row (Fixed Tooltip) -->
                                 <tr>
                                     <td class="px-6 py-3 font-medium text-slate-600 flex items-center gap-1">
                                         PASTA 
-                                        <div class="tooltip-container">
+                                        <div class="tooltip-container relative group">
                                             <span class="material-symbols-outlined text-[14px] text-slate-400">info</span>
-                                            <span class="tooltip-text w-64 text-left p-3 font-normal normal-case leading-tight">PASTA (Zhang et al., 2023). Steering via attention head suppression.</span>
+                                            <!-- Fixed positioning: absolute bottom-full left-0 -->
+                                            <span class="tooltip-text w-64 text-left p-3 font-normal normal-case leading-tight">PASTA (Zhang et al., 2023).<br/>Steering via attention head suppression.</span>
                                         </div>
                                     </td>
                                     <td class="px-6 py-3">71.1</td>
@@ -616,12 +826,15 @@
                                     <td class="px-6 py-3">73.6</td>
                                     <td class="px-6 py-3 font-bold text-slate-700">62.2</td>
                                 </tr>
+
+                                <!-- SpotLight Row (Fixed Tooltip) -->
                                 <tr>
                                     <td class="px-6 py-3 font-medium text-slate-600 flex items-center gap-1">
                                         SpotLight
-                                        <div class="tooltip-container">
+                                        <div class="tooltip-container relative group">
                                             <span class="material-symbols-outlined text-[14px] text-slate-400">info</span>
-                                            <span class="tooltip-text w-64 text-left p-3 font-normal normal-case leading-tight">SpotLight (Venkateswaran et al., 2025). Logit biasing to force attention.</span>
+                                            <!-- Fixed positioning -->
+                                            <span class="tooltip-text w-64 text-left p-3 font-normal normal-case leading-tight">SpotLight (Venkateswaran et al., 2025).<br/>Logit biasing to force attention.</span>
                                         </div>
                                     </td>
                                     <td class="px-6 py-3">65.5</td>
@@ -629,6 +842,7 @@
                                     <td class="px-6 py-3">68.4</td>
                                     <td class="px-6 py-3 font-bold text-slate-700">59.4</td>
                                 </tr>
+
                                 <!-- Tuned Rows -->
                                 <tr class="bg-slate-50/30">
                                     <td class="px-6 py-3 font-medium text-slate-500">
@@ -717,7 +931,7 @@
         </div>
     </section>
 
-    <!-- MOVED DOWN: BACKGROUND SECTION -->
+    <!-- Background Section -->
     <section id="concepts" class="py-24 bg-slate-50 border-y border-slate-200">
         <div class="max-w-6xl mx-auto px-4">
             <h2 class="text-4xl font-bold text-slate-900 mb-12 text-center">Background</h2>
@@ -840,20 +1054,15 @@
 
     <!-- --- SCRIPTS --- -->
     <script>
+        let isFullView = false;
+        let animationTimeout;
+        let isRunning = true;
+
         function copyCitation(btn) {
             const content = document.getElementById('citation-content').innerText;
-            const iconSpan = btn.querySelector('span'); // Get the icon span
-
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(content).then(() => {
-                    showSuccessFeedback(iconSpan);
-                }).catch(err => {
-                    console.error('Clipboard API failed', err);
-                    fallbackCopyDiv(iconSpan);
-                });
-            } else {
-                fallbackCopyDiv(iconSpan);
-            }
+            const iconSpan = btn.querySelector('span'); 
+            // Simplified to use fallback/execCommand directly to avoid iframe permission errors
+            fallbackCopyDiv(iconSpan);
         }
 
         function fallbackCopyDiv(iconSpan) {
@@ -891,7 +1100,7 @@
                 datasets: [
                     {
                         label: 'Original',
-                        data: [72.8, 68.8],
+                        data: [71.1, 65.5],
                         backgroundColor: '#94a3b8',
                         borderRadius: 4,
                         barPercentage: 0.6
@@ -1298,10 +1507,251 @@
             showOverlay(id,show) { const el=document.getElementById(id); if(show)el.classList.remove('opacity-0','pointer-events-none');else el.classList.add('opacity-0','pointer-events-none'); },
             updateChart(val) { this.chartData.labels.push(this.stepIndex); this.chartData.data.push(val); this.chart.data.labels=this.chartData.labels; this.chart.data.datasets[0].data=this.chartData.data; this.chart.update(); },
             log(msg) { const l=document.getElementById('event-log'), i=document.createElement('li'); i.className="border-l-2 border-slate-600 pl-3 py-1 text-slate-300 text-[10px] font-mono leading-tight"; i.textContent=msg; l.prepend(i); },
-            wait(ms) { return new Promise(r=>setTimeout(r,ms)); }
+            wait(ms) { return new Promise(r=>setTimeout(r,ms)); },
+
+            // === FIGURE VIZ SCRIPT ===
+            runFigureViz() {
+                const stack = document.getElementById('viz-stack');
+                const gate = document.getElementById('viz-gate');
+                const gateIcon = document.getElementById('viz-gate-icon');
+                const feedbackArrow = document.getElementById('viz-feedback-arrow');
+                const caption = document.getElementById('viz-caption');
+                const output = document.getElementById('viz-output');
+                const label = document.getElementById('viz-strength-label');
+                
+                const steps = [
+                    document.getElementById('viz-step-1'),
+                    document.getElementById('viz-step-2'),
+                    document.getElementById('viz-step-3')
+                ];
+    
+                // Create Layers
+                const layerCount = 8;
+                if(stack && stack.children.length === 0) {
+                    for(let i=0; i<layerCount; i++) {
+                        const l = document.createElement('div');
+                        l.className = "w-full flex-1 bg-slate-100 rounded-[2px] transition-colors duration-300";
+                        l.id = `viz-layer-${i}`;
+                        stack.appendChild(l);
+                    }
+                }
+
+                window.runCycle = async function() {
+                    if (!window.isVizRunning) return;
+
+                    const sleep = (ms) => new Promise(r => {
+                        window.vizTimeout = setTimeout(r, ms);
+                    });
+
+                    // Reset
+                    resetVisuals();
+                    await sleep(500);
+                    if (!window.isVizRunning) return;
+    
+                    // --- PHASE 1: Strong Steering (Fail) ---
+                    setActiveStep(0);
+                    caption.textContent = "Attempt 1: Raw Pass & Strong Steering";
+                    caption.className = "text-sm font-medium text-indigo-700 bg-indigo-50 inline-block px-4 py-1.5 rounded-full border border-indigo-100 shadow-sm transition-all duration-300";
+                    
+                    // Highlight All Layers
+                    setLayers(layerCount, 'bg-indigo-500');
+                    label.textContent = "Strength: High (32/32)";
+                    label.style.opacity = 1;
+                    await sleep(1500);
+                    if (!window.isVizRunning) return;
+    
+                    // Check
+                    setActiveStep(1);
+                    caption.textContent = "Checking Plausibility...";
+                    caption.className = "text-sm font-medium text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full border border-slate-200 shadow-sm transition-all duration-300";
+                    
+                    gate.className = "w-14 h-14 rounded-lg border-2 shadow-sm flex items-center justify-center relative transition-all duration-300 transform scale-110 border-yellow-400 bg-yellow-50";
+                    gateIcon.textContent = "search";
+                    gateIcon.className = "material-symbols-outlined text-yellow-600 text-2xl";
+                    await sleep(1000);
+                    if (!window.isVizRunning) return;
+    
+                    // Fail
+                    caption.textContent = "❌ Implausible! (Oversteering)";
+                    caption.className = "text-sm font-bold text-red-600 bg-red-50 inline-block px-4 py-1.5 rounded-full border border-red-100 shadow-sm transition-all duration-300";
+                    gate.className = "w-14 h-14 rounded-lg border-2 shadow-sm flex items-center justify-center relative transition-all duration-300 transform scale-100 border-red-500 bg-red-50 shake";
+                    gateIcon.textContent = "block";
+                    gateIcon.className = "material-symbols-outlined text-red-600 text-2xl";
+                    
+                    // Feedback Loop
+                    feedbackArrow.style.opacity = 1;
+                    await sleep(1500);
+                    if (!window.isVizRunning) return;
+    
+                    // --- PHASE 2: Adjustment ---
+                    setActiveStep(2);
+                    feedbackArrow.style.opacity = 0;
+                    caption.textContent = "Reducing Strength...";
+                    caption.className = "text-sm font-bold text-indigo-600 bg-indigo-50 inline-block px-4 py-1.5 rounded-full border border-indigo-100 shadow-sm transition-all duration-300";
+                    
+                    // Un-highlight bottom layers (simulate dropping layers)
+                    for(let i=0; i<4; i++) {
+                        document.getElementById(`viz-layer-${i}`).className = "w-full flex-1 bg-slate-100 rounded-[2px] transition-colors duration-300";
+                    }
+                    label.textContent = "Strength: Med (16/32)";
+                    await sleep(1500);
+                    if (!window.isVizRunning) return;
+    
+                    // Check Again
+                    setActiveStep(1); // Back to check
+                    caption.textContent = "Re-checking Plausibility...";
+                    caption.className = "text-sm font-medium text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full border border-slate-200 shadow-sm transition-all duration-300";
+                    
+                    gate.className = "w-14 h-14 rounded-lg border-2 shadow-sm flex items-center justify-center relative transition-all duration-300 transform scale-110 border-yellow-400 bg-yellow-50";
+                    gateIcon.textContent = "search";
+                    gateIcon.className = "material-symbols-outlined text-yellow-600 text-2xl";
+                    await sleep(1000);
+                    if (!window.isVizRunning) return;
+    
+                    // Success
+                    caption.textContent = "✅ Plausible! Token Accepted.";
+                    caption.className = "text-sm font-bold text-emerald-600 bg-emerald-50 inline-block px-4 py-1.5 rounded-full border border-emerald-100 shadow-sm transition-all duration-300";
+                    gate.className = "w-14 h-14 rounded-lg border-2 shadow-sm flex items-center justify-center relative transition-all duration-300 transform scale-100 border-emerald-500 bg-emerald-50";
+                    gateIcon.textContent = "check_circle";
+                    gateIcon.className = "material-symbols-outlined text-emerald-600 text-2xl";
+    
+                    output.classList.remove('opacity-0', 'translate-y-4');
+                    await sleep(3000);
+                    if (!window.isVizRunning) return;
+    
+                    runCycle();
+                }
+    
+                function setLayers(count, colorClass) {
+                    for(let i=0; i<layerCount; i++) {
+                        const l = document.getElementById(`viz-layer-${i}`);
+                        if (i >= layerCount - count) {
+                             l.className = `w-full flex-1 rounded-[2px] transition-colors duration-300 ${colorClass}`;
+                        } else {
+                             l.className = "w-full flex-1 bg-slate-100 rounded-[2px] transition-colors duration-300";
+                        }
+                    }
+                }
+    
+                function setActiveStep(idx) {
+                    if (window.isVizFullView) return; 
+                    steps.forEach((s, i) => {
+                        if (i === idx) {
+                            s.classList.remove('opacity-30');
+                            s.classList.add('active', 'opacity-100');
+                        } else {
+                            s.classList.remove('active', 'opacity-100');
+                            s.classList.add('opacity-30');
+                        }
+                    });
+                }
+    
+                function resetVisuals() {
+                    output.classList.add('opacity-0', 'translate-y-4');
+                    feedbackArrow.style.opacity = 0;
+                    label.style.opacity = 0;
+                    setLayers(0, '');
+                    gate.className = "w-14 h-14 bg-white rounded-lg border-2 border-slate-200 shadow-sm flex items-center justify-center relative transition-all duration-300 transform";
+                    gateIcon.textContent = "search_check";
+                    gateIcon.className = "material-symbols-outlined text-slate-300 text-2xl transition-colors duration-300";
+                }
+    
+                // Start Viz
+                window.isVizRunning = true;
+                window.isVizFullView = false;
+                window.runCycle();
+            }
         };
 
-        window.onload = () => { app.init(); initMethodAnimation(); if(window.MathJax) MathJax.typesetPromise(); };
+        // GLOBAL HELPERS FOR VIZ TOGGLE
+        window.isVizFullView = false;
+        window.isVizRunning = true;
+        window.vizTimeout = null;
+
+        function toggleVizView() {
+            window.isVizFullView = !window.isVizFullView;
+            const animView = document.getElementById('viz-anim-view');
+            const staticView = document.getElementById('viz-static-view');
+            const btn = document.getElementById('btn-toggle-viz-view');
+            const steps = [
+                document.getElementById('viz-step-1'),
+                document.getElementById('viz-step-2'),
+                document.getElementById('viz-step-3')
+            ];
+
+            if (window.isVizFullView) {
+                // STOP ANIMATION
+                window.isVizRunning = false;
+                clearTimeout(window.vizTimeout);
+                
+                animView.classList.add('hidden');
+                staticView.classList.remove('hidden');
+                staticView.classList.add('flex');
+                
+                btn.innerHTML = '<span class="material-symbols-outlined text-sm">play_arrow</span> Resume';
+                
+                steps.forEach(s => {
+                    s.classList.remove('opacity-30');
+                    s.classList.add('active', 'opacity-100');
+                });
+            } else {
+                // RESUME
+                window.isVizRunning = true;
+                animView.classList.remove('hidden');
+                staticView.classList.add('hidden');
+                staticView.classList.remove('flex');
+                
+                btn.innerHTML = '<span class="material-symbols-outlined text-sm">visibility</span> Full View';
+                
+                if(window.runCycle) window.runCycle(); 
+            }
+        }
+
+        function showDemoSection() {
+            const demo = document.getElementById('demo');
+            demo.classList.remove('hidden');
+            // Small delay to allow display:block to apply before opacity transition
+            setTimeout(() => {
+                demo.classList.remove('opacity-0');
+                demo.scrollIntoView({ behavior: 'smooth' });
+            }, 50);
+        }
+
+        function toggleDemoSection() {
+            const demo = document.getElementById('demo');
+            const btn = document.getElementById('btn-launch-demo');
+            
+            if (demo.classList.contains('hidden')) {
+                // Show Demo
+                demo.classList.remove('hidden');
+                // Small delay to allow display:block to apply before opacity transition
+                setTimeout(() => {
+                    demo.classList.remove('opacity-0');
+                    demo.scrollIntoView({ behavior: 'smooth' });
+                }, 50);
+                
+                btn.innerHTML = '<span class="material-symbols-outlined text-lg transition-transform">close</span> Close Interactive Demo';
+                btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-500', 'shadow-indigo-200');
+                btn.classList.add('bg-slate-600', 'hover:bg-slate-500', 'shadow-slate-200');
+            } else {
+                // Hide Demo
+                demo.classList.add('opacity-0');
+                setTimeout(() => {
+                    demo.classList.add('hidden');
+                }, 700); // Wait for transition
+                
+                btn.innerHTML = '<span class="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">rocket_launch</span> Launch Interactive Demo';
+                btn.classList.add('bg-indigo-600', 'hover:bg-indigo-500', 'shadow-indigo-200');
+                btn.classList.remove('bg-slate-600', 'hover:bg-slate-500', 'shadow-slate-200');
+            }
+        }
+
+        window.onload = () => { 
+            app.init(); 
+            initMethodAnimation(); 
+            app.runFigureViz(); // Start the new figure animation
+            if(window.MathJax) MathJax.typesetPromise(); 
+        };
     </script>
 </body>
 </html>
