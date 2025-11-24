@@ -75,30 +75,6 @@
         }
         @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
 
-        /* Custom Tooltip */
-        .tooltip-container { position: relative; display: inline-block; }
-        .tooltip-text {
-            visibility: hidden;
-            width: max-content;
-            min-width: 220px;
-            background-color: #1e293b;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 8px 12px;
-            position: absolute;
-            z-index: 10;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.2s;
-            font-size: 0.75rem;
-            font-weight: normal;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
-
         /* Styles from Visualization Demo */
         .layer-stack { perspective: 1000px; }
         .layer-block { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
@@ -136,7 +112,7 @@
             overflow-x: auto;
         }
 
-        /* === FIX: Force MathJax Inline === */
+        /* === Force MathJax Inline === */
         mjx-container {
             display: inline-block !important;
             margin: 0 !important;
@@ -153,6 +129,23 @@
             30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
             40%, 60% { transform: translate3d(4px, 0, 0); }
         }
+
+        /* Portal Tooltip Styles */
+        #portal-tooltip {
+            position: fixed;
+            z-index: 9999;
+            background-color: #1e293b;
+            color: #fff;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            line-height: 1.25;
+            max-width: 260px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
@@ -161,21 +154,20 @@
     <nav id="navbar" class="fixed top-0 w-full z-50 glass-panel transition-all duration-300">
         <div class="max-w-[88rem] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                <a href="./" class="flex items-center gap-2 cursor-pointer">
                     <span class="material-symbols-outlined text-blue-600 text-3xl">assistant_direction</span>
                     <span class="font-bold text-xl tracking-tight text-slate-900">DIRECTER</span>
-                </div>
+                </a>
                 
                 <div class="hidden md:flex gap-8 text-sm font-medium text-slate-600">
-                    <a href="#abstract" class="hover:text-blue-600 transition-colors">Motivation</a>
-                    <a href="#concept-figure" class="hover:text-blue-600 transition-colors">Mechanism</a>
+                    <a href="#motivation" class="hover:text-blue-600 transition-colors">Motivation</a>
+                    <a href="#mechanism" class="hover:text-blue-600 transition-colors">Mechanism</a>
                     <a href="#method" class="hover:text-blue-600 transition-colors">Methodology</a>
                     <a href="#results" class="hover:text-blue-600 transition-colors">Results</a>
-                    <a href="#concepts" class="hover:text-blue-600 transition-colors">Background</a>
+                    <a href="#background" class="hover:text-blue-600 transition-colors">Background</a>
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <!-- add arXiv link -->
                     <a href="" target="_blank" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg shadow-slate-200 flex items-center gap-2">
                         <span class="material-symbols-outlined text-sm">description</span>
                         Paper
@@ -193,7 +185,6 @@
         </div>
 
         <div class="max-w-5xl mx-auto px-4 text-center">
-            <!-- ASSET: DO NOT MOVE -->
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-semibold uppercase tracking-wider mb-8 animate-float">
                 Preprint
             </div>
@@ -203,19 +194,18 @@
                 <span class="gradient-text">Activation Steering</span> with Dynamic Rejection
             </h1>
             
-            <!-- Authors with Links -->
             <div class="flex flex-wrap justify-center gap-x-8 gap-y-2 text-lg text-slate-600 mb-10">
-                <div class="tooltip-container font-medium transition-colors hover:text-blue-600">
+                <div class="font-medium transition-colors hover:text-blue-600 relative group cursor-pointer">
                     <a href="https://github.com/mjk0618" target="_blank" class="border-transparent hover:border-blue-600 pb-0.5">Minjae Kang</a>
-                    <span class="tooltip-text">Independent Researcher</span>
+                    <!-- Simplified Tooltip for Authors -->
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Independent Researcher</div>
                 </div>
-                <div class="tooltip-container font-medium transition-colors hover:text-blue-600">
+                <div class="font-medium transition-colors hover:text-blue-600 relative group cursor-pointer">
                     <a href="https://sites.google.com/view/jaehyungkim" target="_blank" class="border-transparent hover:border-blue-600 pb-0.5">Jaehyung Kim</a>
-                    <span class="tooltip-text">Yonsei University</span>
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Yonsei University</div>
                 </div>
             </div>
 
-            <!-- TL;DR & Abstract Box -->
             <div class="max-w-4xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm text-left mb-8 overflow-hidden">
                 <div class="p-6 pb-4">
                     <div class="flex items-start gap-4 mb-2">
@@ -229,7 +219,6 @@
                     </div>
                 </div>
                 
-                <!-- Expandable Abstract -->
                 <div class="px-6 pb-6">
                     <details class="group">
                         <summary class="flex items-center gap-2 cursor-pointer font-bold text-sm text-slate-700 transition-colors select-none list-none">
@@ -251,9 +240,7 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <!-- add arXiv link -->
                 <a href="" target="_blank" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold transition-colors text-sm">
                     <span class="material-symbols-outlined text-base">article</span>
                     Paper
@@ -267,7 +254,7 @@
     </header>
 
     <!-- Motivation -->
-    <section id="abstract" class="py-20 bg-white border-y border-slate-100">
+    <section id="motivation" class="py-20 bg-white border-y border-slate-100">
         <div class="max-w-[88rem] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
                 <div>
@@ -284,7 +271,6 @@
                     </p>
                 </div>
                 
-                <!-- Visual Comparison -->
                 <div class="relative mt-4">
                     <div class="bg-slate-50/50 rounded-2xl border border-slate-200 p-6 shadow-xl backdrop-blur-sm">
                         <div class="flex items-center gap-2 mb-4 border-b border-slate-200 pb-4">
@@ -305,7 +291,6 @@
                         </div>
                         
                         <div class="space-y-4">
-                            <!-- Bad Case -->
                             <div class="p-4 bg-white rounded-lg border border-red-100 relative overflow-hidden group transition-all hover:shadow-md">
                                 <div class="relative z-10">
                                     <div class="flex justify-between items-center">
@@ -320,7 +305,6 @@
                                 </div>
                             </div>
 
-                            <!-- Good Case -->
                             <div class="p-4 bg-white rounded-lg border border-blue-100 relative overflow-hidden group transition-all hover:shadow-md">
                                 <div class="relative z-10">
                                     <div class="flex justify-between items-center">
@@ -341,8 +325,8 @@
         </div>
     </section>
 
-    <!-- NEW: CONCEPT FIGURE SECTION (UPDATED) -->
-    <section id="concept-figure" class="py-24 bg-slate-50 border-b border-slate-200 overflow-hidden">
+    <!-- CONCEPT FIGURE SECTION -->
+    <section id="mechanism" class="py-24 bg-slate-50 border-b border-slate-200 overflow-hidden">
         <div class="max-w-[88rem] mx-auto px-4 sm:px-6 lg:px-8">
             
             <div class="text-center mb-16">
@@ -360,10 +344,10 @@
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-8">
                     
                     <!-- LEFT: Visualization Stage -->
-                    <div class="lg:col-span-7 p-8 lg:p-12 flex flex-col items-center justify-center bg-slate-50/50 border-r border-slate-100 relative min-h-[500px]">
+                    <div class="lg:col-span-7 p-4 sm:p-8 lg:p-12 flex flex-col items-center justify-center bg-slate-50/50 border-r border-slate-100 relative min-h-[400px] sm:min-h-[500px]">
                         
                         <!-- 1. DYNAMIC VIEW (Animated) -->
-                        <div id="viz-anim-view" class="w-full flex flex-col items-center">
+                        <div id="viz-anim-view" class="w-full flex flex-col items-center transform scale-[1.0] sm:scale-90 lg:scale-100 origin-center transition-transform duration-300">
                             <div class="relative w-full max-w-lg aspect-video flex items-center justify-between gap-4 select-none">
                                 
                                 <!-- Input -->
@@ -429,15 +413,13 @@
                         </div>
 
                         <!-- 2. STATIC VIEW (Hidden by default) -->
-                        <div id="viz-static-view" class="hidden w-full flex-col gap-8">
-                            <!-- Scenario A: Oversteering -->
+                        <div id="viz-static-view" class="hidden w-full flex-col gap-8 transform scale-[1.0] sm:scale-100 origin-top">
                             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm opacity-60">
                                 <div class="flex items-center gap-2 mb-2 text-red-500 font-bold text-xs uppercase tracking-wider">
                                     <span class="material-symbols-outlined text-sm">close</span> Phase 1: Rejection
                                 </div>
                                 <div class="flex items-center justify-between gap-2 opacity-80">
                                     <div class="w-16 h-20 bg-slate-100 rounded border border-slate-200 flex flex-col-reverse p-0.5 gap-px">
-                                        <!-- All layers active -->
                                         <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
                                         <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
                                         <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
@@ -451,7 +433,6 @@
                                 <p class="text-[10px] text-slate-400 mt-2 text-center">Steering All Layers → Implausible Output</p>
                             </div>
 
-                            <!-- Scenario B: Success -->
                             <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-md relative overflow-hidden">
                                 <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-full -mr-8 -mt-8 z-0"></div>
                                 <div class="flex items-center gap-2 mb-2 text-emerald-600 font-bold text-xs uppercase tracking-wider relative z-10">
@@ -459,7 +440,6 @@
                                 </div>
                                 <div class="flex items-center justify-between gap-2 relative z-10">
                                     <div class="w-16 h-20 bg-slate-100 rounded border border-slate-200 flex flex-col-reverse p-0.5 gap-px">
-                                        <!-- Top layers active only -->
                                         <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
                                         <div class="flex-1 w-full bg-indigo-500 rounded-[1px]"></div>
                                         <div class="flex-1 w-full bg-slate-200 rounded-[1px]"></div>
@@ -479,7 +459,6 @@
                     <!-- RIGHT: Step-by-Step Context -->
                     <div class="lg:col-span-5 p-8 lg:p-12 flex flex-col justify-center bg-white relative">
                         
-                        <!-- UPDATED HEADER & BUTTON LAYOUT -->
                         <div class="flex items-center justify-between mb-8">
                             <h3 class="font-bold text-slate-900 flex items-center gap-3 text-lg">
                                 <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600 flex items-center justify-center">
@@ -487,17 +466,14 @@
                                 </div>
                                 Decoding Cycle
                             </h3>
-                            <!-- UPDATED: Fixed width button (w-32) to prevent layout shifts -->
                             <button onclick="toggleVizView()" id="btn-toggle-viz-view" class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 hover:bg-slate-200 text-slate-600 w-32 py-2 rounded border border-slate-200 transition-all flex items-center justify-center gap-2">
                                 <span class="material-symbols-outlined text-sm">visibility</span> Full View
                             </button>
                         </div>
                         
                         <div class="space-y-8 relative">
-                            <!-- Connecting Line -->
                             <div class="absolute left-[19px] top-4 bottom-4 w-0.5 bg-slate-100"></div>
     
-                            <!-- Step 1 -->
                             <div class="relative pl-12 group transition-opacity duration-500 opacity-30" id="viz-step-1">
                                 <span class="absolute left-0 top-0 w-10 h-10 rounded-full bg-white text-slate-500 text-sm font-bold flex items-center justify-center border-2 border-slate-200 transition-all duration-300 group-[.active]:bg-indigo-600 group-[.active]:text-white group-[.active]:border-indigo-600 shadow-sm z-10">1</span>
                                 <h4 class="text-sm font-bold text-slate-800 mb-1">Raw Pass & Gating</h4>
@@ -506,7 +482,6 @@
                                 </p>
                             </div>
     
-                            <!-- Step 2 -->
                             <div class="relative pl-12 group transition-opacity duration-500 opacity-30" id="viz-step-2">
                                 <span class="absolute left-0 top-0 w-10 h-10 rounded-full bg-white text-slate-500 text-sm font-bold flex items-center justify-center border-2 border-slate-200 transition-all duration-300 group-[.active]:bg-red-500 group-[.active]:text-white group-[.active]:border-red-500 shadow-sm z-10">2</span>
                                 <h4 class="text-sm font-bold text-slate-800 mb-1">Detect Oversteering</h4>
@@ -515,7 +490,6 @@
                                 </p>
                             </div>
     
-                            <!-- Step 3 -->
                             <div class="relative pl-12 group transition-opacity duration-500 opacity-30" id="viz-step-3">
                                 <span class="absolute left-0 top-0 w-10 h-10 rounded-full bg-white text-slate-500 text-sm font-bold flex items-center justify-center border-2 border-slate-200 transition-all duration-300 group-[.active]:bg-emerald-500 group-[.active]:text-white group-[.active]:border-emerald-500 shadow-sm z-10">3</span>
                                 <h4 class="text-sm font-bold text-slate-800 mb-1">Dynamic Adjustment</h4>
@@ -529,7 +503,6 @@
                 </div>
             </div>
 
-            <!-- CTA to Show Demo -->
             <div class="mt-12 text-center">
                 <p class="text-slate-500 mb-4 text-sm">Want to explore the distributions in real-time?</p>
                 <button onclick="toggleDemoSection()" id="btn-launch-demo" class="inline-flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold transition-all shadow-lg shadow-indigo-200 group transform hover:-translate-y-0.5">
@@ -553,12 +526,9 @@
                 </p>
             </div>
 
-            <!-- Visualization App Container -->
             <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden flex flex-col lg:flex-row h-[650px]">
                 
-                <!-- Left Control Panel -->
                 <aside class="w-full lg:w-1/4 border-r border-slate-700 bg-slate-900/50 flex flex-col p-5 gap-4 shrink-0">
-                    <!-- Scenario Selector -->
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 block">Scenario</label>
                         <div class="flex gap-2 mb-3">
@@ -571,7 +541,6 @@
                         </div>
                     </div>
 
-                    <!-- Output Display (Fixed Height) -->
                     <div class="flex flex-col bg-black/30 rounded border border-slate-700 overflow-hidden h-40 shrink-0">
                         <div class="bg-slate-800 px-3 py-1.5 border-b border-slate-700 flex justify-between items-center">
                             <span class="text-[10px] font-bold text-slate-300 uppercase">Live Output</span>
@@ -580,7 +549,6 @@
                         <div class="flex-1 p-3 font-serif text-sm leading-relaxed text-slate-200 overflow-y-auto custom-scrollbar whitespace-pre-wrap font-mono" id="output-text"></div>
                     </div>
 
-                    <!-- Controls -->
                     <div class="grid grid-cols-2 gap-2 mt-auto">
                         <button class="col-span-1 py-2 px-3 bg-slate-700 hover:bg-slate-600 text-white rounded font-bold text-xs flex items-center justify-center gap-2 transition-colors" onclick="app.step()">
                             <span class="material-symbols-outlined text-sm">skip_next</span> Step
@@ -594,13 +562,10 @@
                     </div>
                 </aside>
 
-                <!-- Main Viz Area -->
                 <section class="flex-1 relative bg-slate-900 flex flex-col p-6 gap-6 overflow-hidden">
-                    <!-- Background Grid -->
                     <div class="absolute inset-0" style="background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none;"></div>
 
                     <div class="flex gap-8 h-full z-10">
-                        <!-- 1. Layer Stack -->
                         <div class="flex flex-col items-center gap-2 w-16 shrink-0 pt-8">
                             <div class="text-center space-y-1">
                                 <h3 class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Layers</h3>
@@ -613,11 +578,8 @@
                             </div>
                         </div>
 
-                        <!-- 2. Plausibility Engine -->
                         <div class="flex-1 flex flex-col gap-4 max-w-md mx-auto justify-center">
-                            <!-- Distribution Charts -->
                             <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-5 shadow-2xl backdrop-blur relative overflow-hidden h-64 flex flex-col justify-between">
-                                <!-- Raw -->
                                 <div>
                                     <div class="flex justify-between text-xs mb-1 items-center whitespace-nowrap">
                                         <div class="flex items-center gap-1 text-blue-400 font-bold text-xs">
@@ -625,11 +587,9 @@
                                         </div>
                                         <span class="font-mono text-slate-300 opacity-0 transition-opacity text-[10px]" id="raw-top-token"></span>
                                     </div>
-                                    <!-- UPDATED: Changed ID target logic in JS to use flex-start -->
                                     <div class="flex items-start gap-6 border-b border-slate-600/50 pb-2 min-h-[3.5rem] relative" id="raw-dist-chart"></div>
                                 </div>
 
-                                <!-- Steered -->
                                 <div class="relative">
                                     <div class="flex justify-between text-xs mb-1 items-center whitespace-nowrap">
                                         <div class="flex items-center gap-1 text-orange-400 font-bold text-xs">
@@ -637,10 +597,8 @@
                                         </div>
                                         <span class="font-mono text-slate-300 opacity-0 transition-opacity text-[10px]" id="steered-top-token"></span>
                                     </div>
-                                    <!-- UPDATED: Increased min-h for overlay space -->
                                     <div class="flex items-start gap-6 border-b border-slate-600/50 pb-2 min-h-[4.5rem]" id="steered-dist-chart"></div>
 
-                                    <!-- Overlays -->
                                     <div class="absolute inset-0 flex items-center justify-center bg-slate-800/95 backdrop-blur-sm rounded transition-opacity duration-300 z-20 opacity-0 pointer-events-none" id="skip-overlay">
                                         <div class="text-center">
                                             <span class="material-symbols-outlined text-3xl text-slate-500 block mb-1">fast_forward</span>
@@ -648,7 +606,6 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- UPDATED: WIDER SPACING FOR REJECTION OVERLAY -->
                                     <div class="absolute inset-0 flex items-center justify-center bg-red-900/95 backdrop-blur-sm rounded opacity-0 pointer-events-none transition-opacity duration-300 z-10 p-6" id="reject-overlay">
                                         <div class="text-center w-full flex flex-col items-center justify-center gap-3">
                                             <span class="material-symbols-outlined text-4xl text-red-200 block">block</span>
@@ -659,7 +616,6 @@
                                 </div>
                             </div>
 
-                            <!-- Logic Block -->
                             <div class="bg-slate-900/80 border border-slate-700 rounded-xl p-4 flex items-center justify-between gap-4 shrink-0">
                                 <div class="flex-1">
                                     <div class="text-[10px] uppercase text-slate-500 font-bold mb-1">Plausibility Check</div>
@@ -675,7 +631,6 @@
                     </div>
                 </section>
 
-                <!-- Right Panel: Metrics & Log -->
                 <aside class="w-full lg:w-1/4 border-l border-slate-700 bg-slate-900 p-4 flex flex-col gap-4 shrink-0">
                     <div class="bg-slate-800 p-3 rounded border border-slate-700 shrink-0">
                         <h4 class="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider">Steering Dynamics</h4>
@@ -688,7 +643,6 @@
                         </p>
                     </div>
 
-                    <!-- Corrected Event Log -->
                     <div class="bg-slate-800 p-3 rounded border border-slate-700 flex-1 overflow-hidden flex flex-col min-h-[150px]">
                         <h4 class="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider shrink-0">Event Log</h4>
                         <ul class="space-y-2 text-[10px] font-mono flex-1 overflow-y-auto custom-scrollbar" id="event-log">
@@ -711,7 +665,6 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <!-- Layer Ranking -->
                 <div class="bg-white rounded-2xl p-8 border border-slate-200 relative overflow-hidden shadow-sm">
                     <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <span class="material-symbols-outlined text-blue-600">bar_chart</span>
@@ -721,7 +674,6 @@
                         DIRECTER performs a one-time layerwise <strong>Sensitivity Analysis</strong>. <br/>
                         It measures the distributional shift caused by steering each layer, then reorders them to prioritize high-leverage layers for steering.
                     </p>
-                    <!-- REMOVED grey outline -->
                     <div class="bg-white p-6 rounded-xl h-48 relative">
                         <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 mb-4 px-2">
                             <span>Layer</span>
@@ -736,7 +688,6 @@
                     </div>
                 </div>
 
-                <!-- Skipping Gate -->
                 <div class="bg-white rounded-2xl p-8 border border-slate-200 relative overflow-hidden shadow-sm">
                     <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <span class="material-symbols-outlined text-purple-600">gate</span>
@@ -747,17 +698,14 @@
                         <br/><br/><br/><br/>
                     </p>
                     
-                    <!-- REMOVED grey outline -->
                     <div class="bg-white p-6 rounded-xl h-48 flex flex-col items-center justify-center relative" id="gate-container">
                         
                         <div class="flex gap-8 items-end h-24 mb-4 w-full justify-center relative">
-                            <!-- Bar 1 -->
                             <div class="flex flex-col items-center gap-2">
                                 <span class="text-xs font-bold text-slate-600 transition-all duration-500" id="gate-p1-text">90%</span>
                                 <div id="gate-p1-bar" class="w-12 bg-slate-800 rounded-t transition-all duration-500 ease-in-out" style="height: 80px;"></div>
                                 <span class="text-[10px] font-bold text-slate-400 uppercase">Top 1</span>
                             </div>
-                            <!-- Bar 2 -->
                             <div class="flex flex-col items-center gap-2">
                                 <span class="text-xs font-bold text-slate-600 transition-all duration-500" id="gate-p2-text">5%</span>
                                 <div id="gate-p2-bar" class="w-12 bg-slate-300 rounded-t transition-all duration-500 ease-in-out" style="height: 5px;"></div>
@@ -765,7 +713,6 @@
                             </div>
                         </div>
 
-                        <!-- Status Pill -->
                         <div id="gate-pill" class="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 bg-purple-50 text-purple-700 border border-purple-100">
                             Confident • SKIP
                         </div>
@@ -787,12 +734,12 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                 <!-- Results Table (Left) -->
-                <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full relative z-10">
+                <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full relative z-10 overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 rounded-t-xl">
                         <h3 class="font-bold text-sm text-slate-800">Benchmark Performance (Accuracy %)</h3>
                     </div>
-                    <div class="flex-1 overflow-visible">
-                        <table class="w-full text-sm text-left h-full">
+                    <div class="flex-1 overflow-x-auto">
+                        <table class="w-full text-sm text-left h-full whitespace-nowrap">
                             <thead>
                                 <tr class="text-xs text-slate-400 uppercase tracking-wider border-b border-slate-100">
                                     <th class="px-6 py-3 font-semibold">Method</th>
@@ -811,15 +758,12 @@
                                     <td class="px-6 py-3 font-bold text-slate-700">70.0</td>
                                 </tr>
                                 
-                                <!-- PASTA Row (Fixed Tooltip) -->
                                 <tr>
                                     <td class="px-6 py-3 font-medium text-slate-600 flex items-center gap-1">
                                         PASTA 
-                                        <div class="tooltip-container relative group">
-                                            <span class="material-symbols-outlined text-[14px] text-slate-400">info</span>
-                                            <!-- Fixed positioning: absolute bottom-full left-0 -->
-                                            <span class="tooltip-text w-64 text-left p-3 font-normal normal-case leading-tight">PASTA (Zhang et al., 2023).<br/>Steering via attention head suppression.</span>
-                                        </div>
+                                        <span class="material-symbols-outlined text-[14px] text-slate-400"
+                                              onmouseenter="portalTooltip(this, 'PASTA (Zhang et al., 2023).<br/>Steering via attention head suppression.')"
+                                              onmouseleave="hidePortalTooltip()">info</span>
                                     </td>
                                     <td class="px-6 py-3">71.1</td>
                                     <td class="px-6 py-3">48.8</td>
@@ -827,15 +771,12 @@
                                     <td class="px-6 py-3 font-bold text-slate-700">62.2</td>
                                 </tr>
 
-                                <!-- SpotLight Row (Fixed Tooltip) -->
                                 <tr>
                                     <td class="px-6 py-3 font-medium text-slate-600 flex items-center gap-1">
                                         SpotLight
-                                        <div class="tooltip-container relative group">
-                                            <span class="material-symbols-outlined text-[14px] text-slate-400">info</span>
-                                            <!-- Fixed positioning -->
-                                            <span class="tooltip-text w-64 text-left p-3 font-normal normal-case leading-tight">SpotLight (Venkateswaran et al., 2025).<br/>Logit biasing to force attention.</span>
-                                        </div>
+                                        <span class="material-symbols-outlined text-[14px] text-slate-400"
+                                              onmouseenter="portalTooltip(this, 'SpotLight (Venkateswaran et al., 2025).<br/>Logit biasing to force attention.')"
+                                              onmouseleave="hidePortalTooltip()">info</span>
                                     </td>
                                     <td class="px-6 py-3">65.5</td>
                                     <td class="px-6 py-3">49.4</td>
@@ -843,7 +784,6 @@
                                     <td class="px-6 py-3 font-bold text-slate-700">59.4</td>
                                 </tr>
 
-                                <!-- Tuned Rows -->
                                 <tr class="bg-slate-50/30">
                                     <td class="px-6 py-3 font-medium text-slate-500">
                                         PASTA* <span class="text-[10px] text-slate-400 block">Tuned</span>
@@ -862,7 +802,6 @@
                                     <td class="px-6 py-3">87.0</td>
                                     <td class="px-6 py-3 font-bold text-slate-600">72.1</td>
                                 </tr>
-                                <!-- DIRECTER -->
                                 <tr class="bg-indigo-50/60">
                                     <td class="px-6 py-3 font-bold text-indigo-700">DIRECTER</td>
                                     <td class="px-6 py-3 font-bold text-indigo-600">81.8</td>
@@ -875,10 +814,8 @@
                     </div>
                 </div>
 
-                <!-- Right Column (Split) -->
                 <div class="lg:col-span-5 flex flex-col gap-6 h-full">
                     
-                    <!-- Mitigation Chart Panel -->
                     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex-1">
                         <div class="mb-4">
                             <h3 class="font-bold text-sm text-slate-800">Mitigating Oversteering</h3>
@@ -889,7 +826,6 @@
                         </div>
                     </div>
 
-                    <!-- Efficiency Panel -->
                     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                         <div class="mb-4 flex items-center gap-2">
                             <span class="material-symbols-outlined text-emerald-500">bolt</span>
@@ -897,11 +833,9 @@
                         </div>
                         
                         <div class="flex flex-wrap items-center gap-4 mb-4 h-auto">
-                            <!-- Throughput Comparison Chart -->
                             <div class="flex-1 h-16 relative min-w-[150px]">
                                 <canvas id="efficiencyChart"></canvas>
                             </div>
-                            <!-- Stats -->
                             <div class="flex gap-2">
                                 <div class="bg-slate-50 p-2 px-3 rounded-lg border border-slate-100 text-center min-w-[70px]">
                                     <span class="text-xl font-bold text-slate-800">90%</span>
@@ -932,11 +866,10 @@
     </section>
 
     <!-- Background Section -->
-    <section id="concepts" class="py-24 bg-slate-50 border-y border-slate-200">
+    <section id="background" class="py-24 bg-slate-50 border-y border-slate-200">
         <div class="max-w-6xl mx-auto px-4">
             <h2 class="text-4xl font-bold text-slate-900 mb-12 text-center">Background</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <!-- KV Cache -->
                 <div class="group h-full">
                     <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 h-full hover:shadow-md transition-shadow flex flex-col overflow-hidden">
                         <div class="flex items-center gap-3 mb-6">
@@ -947,7 +880,6 @@
                         </div>
                         <div class="bg-slate-50 rounded-xl p-8 mb-6 flex flex-col items-center justify-center min-h-[200px] border border-slate-100 relative overflow-hidden">
                             <div class="flex gap-4 items-center z-10">
-                                <!-- Memory Blocks -->
                                 <div class="flex flex-col gap-1">
                                     <div class="w-12 h-8 bg-slate-200 rounded border border-slate-300 flex items-center justify-center text-[10px] text-slate-500 font-mono">K1</div>
                                     <div class="w-12 h-8 bg-slate-200 rounded border border-slate-300 flex items-center justify-center text-[10px] text-slate-500 font-mono">V1</div>
@@ -972,7 +904,6 @@
                     </div>
                 </div>
 
-                <!-- Vector Steering -->
                 <div class="group h-full">
                     <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 h-full hover:shadow-md transition-shadow flex flex-col overflow-hidden">
                         <div class="flex items-center gap-3 mb-6">
@@ -983,7 +914,6 @@
                         </div>
                         <div class="bg-slate-50 rounded-xl p-6 mb-6 h-[200px] flex items-center justify-center relative overflow-hidden border border-slate-100">
                             <div class="w-2 h-2 bg-slate-400 rounded-full absolute left-[20%] bottom-[20%] z-10"></div>
-                            <!-- Vectors -->
                             <div class="absolute left-[20%] bottom-[20%] h-0.5 bg-slate-300 w-32 origin-left -rotate-12 rounded flex items-center">
                                 <span class="absolute -top-5 right-0 text-[10px] text-slate-400 font-bold uppercase whitespace-nowrap">Original</span>
                             </div>
@@ -1006,12 +936,9 @@
     <!-- Footer -->
     <footer class="bg-slate-900 text-slate-400 py-16 border-t border-slate-800">
         <div class="max-w-4xl mx-auto px-4">
-            <!-- Citation -->
             <div class="mb-12">
                 <h4 class="text-white font-bold mb-4 uppercase tracking-wider text-sm">Citation</h4>
-                <!-- Changed container to flex center -->
                 <div class="bg-slate-800 p-6 rounded-xl relative group border border-slate-700 h-44 overflow-hidden flex items-center">
-                    <!-- Changed from textarea to div/code for centering -->
                     <div id="citation-content" class="citation-content w-full text-slate-400 select-all">@article{directer2025,
   title={Enhancing Instruction Following of LLMs via Activation Steering with Dynamic Rejection},
   author={Anonymous},
@@ -1024,7 +951,6 @@
                 </div>
             </div>
             
-            <!-- Contact -->
             <div class="mb-12">
                 <h4 class="text-white font-bold mb-4 uppercase tracking-wider text-sm">Contact</h4>
                 <ul class="space-y-3 text-sm">
@@ -1058,10 +984,56 @@
         let animationTimeout;
         let isRunning = true;
 
+        /* === PORTAL TOOLTIP LOGIC === */
+        let activeTooltip = null;
+
+        function portalTooltip(element, content) {
+            // Remove existing if any
+            hidePortalTooltip();
+
+            // Create new tooltip
+            const tooltip = document.createElement('div');
+            tooltip.id = 'portal-tooltip';
+            tooltip.innerHTML = content;
+            document.body.appendChild(tooltip);
+            activeTooltip = tooltip;
+
+            // Calculate Position
+            const rect = element.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
+            
+            // Prefer Top placement, fallback to Bottom if clipped
+            let top = rect.top - tooltipRect.height - 10;
+            let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+
+            // Boundary checks
+            if (top < 10) { 
+                top = rect.bottom + 10; // Move to bottom
+            }
+            if (left < 10) left = 10; // Left edge
+            if (left + tooltipRect.width > window.innerWidth - 10) {
+                left = window.innerWidth - tooltipRect.width - 10; // Right edge
+            }
+
+            tooltip.style.top = `${top}px`;
+            tooltip.style.left = `${left}px`;
+            
+            // Show
+            requestAnimationFrame(() => {
+                tooltip.style.opacity = '1';
+            });
+        }
+
+        function hidePortalTooltip() {
+            if (activeTooltip) {
+                activeTooltip.remove();
+                activeTooltip = null;
+            }
+        }
+
         function copyCitation(btn) {
             const content = document.getElementById('citation-content').innerText;
             const iconSpan = btn.querySelector('span'); 
-            // Simplified to use fallback/execCommand directly to avoid iframe permission errors
             fallbackCopyDiv(iconSpan);
         }
 
@@ -1082,16 +1054,15 @@
         function showSuccessFeedback(iconSpan) {
             if (!iconSpan) return;
             const originalText = 'content_copy';
-            iconSpan.innerText = 'check'; // Change to check icon
-            iconSpan.classList.add('text-green-400'); // Optional: Add color for feedback
+            iconSpan.innerText = 'check'; 
+            iconSpan.classList.add('text-green-400');
 
             setTimeout(() => {
-                iconSpan.innerText = originalText; // Revert
+                iconSpan.innerText = originalText;
                 iconSpan.classList.remove('text-green-400');
             }, 2000);
         }
 
-        // --- Mitigation Chart Logic ---
         const ctx = document.getElementById('mitigationChart').getContext('2d');
         new Chart(ctx, {
             type: 'bar',
@@ -1128,7 +1099,6 @@
             }
         });
 
-        // --- Efficiency Chart Logic ---
         const ctxEff = document.getElementById('efficiencyChart').getContext('2d');
         new Chart(ctxEff, {
             type: 'bar',
@@ -1151,7 +1121,6 @@
             }
         });
 
-        // --- Method Animations ---
         const rankContainer = document.getElementById('ranking-container');
         const rankStatus = document.getElementById('ranking-status');
         const numMethodLayers = 4;
@@ -1370,7 +1339,7 @@
             
             togglePlay() { if(this.isPlaying) this.pause(); else this.play(); },
             play() { this.isPlaying=true; document.getElementById('icon-play').textContent='pause'; document.getElementById('text-play').textContent='Pause'; document.getElementById('btn-play').classList.replace('bg-blue-600','bg-slate-600'); if(this.stepIndex>=this.scenario.tokens.length) this.reset(); this.processStep(); },
-            pause() { this.isPlaying=false; clearTimeout(this.playInterval); document.getElementById('icon-play').textContent='play_arrow'; document.getElementById('text-play').textContent='Auto'; document.getElementById('btn-play').classList.replace('bg-slate-600','bg-blue-600'); },
+            pause() { this.isPlaying=false; clearTimeout(this.playInterval); document.getElementById('icon-play').textContent='play_arrow'; document.getElementById('text-play').textContent='Auto'; document.getElementById('btn-play').classList.replace('bg-blue-600','bg-blue-600'); },
             step() { this.pause(); if(this.stepIndex>=this.scenario.tokens.length) return; this.processStep(); },
             
             async processStep() {
@@ -1525,7 +1494,6 @@
                     document.getElementById('viz-step-3')
                 ];
     
-                // Create Layers
                 const layerCount = 8;
                 if(stack && stack.children.length === 0) {
                     for(let i=0; i<layerCount; i++) {
@@ -1543,24 +1511,20 @@
                         window.vizTimeout = setTimeout(r, ms);
                     });
 
-                    // Reset
                     resetVisuals();
                     await sleep(500);
                     if (!window.isVizRunning) return;
     
-                    // --- PHASE 1: Strong Steering (Fail) ---
                     setActiveStep(0);
                     caption.textContent = "Attempt 1: Raw Pass & Strong Steering";
                     caption.className = "text-sm font-medium text-indigo-700 bg-indigo-50 inline-block px-4 py-1.5 rounded-full border border-indigo-100 shadow-sm transition-all duration-300";
                     
-                    // Highlight All Layers
                     setLayers(layerCount, 'bg-indigo-500');
                     label.textContent = "Strength: High (32/32)";
                     label.style.opacity = 1;
                     await sleep(1500);
                     if (!window.isVizRunning) return;
     
-                    // Check
                     setActiveStep(1);
                     caption.textContent = "Checking Plausibility...";
                     caption.className = "text-sm font-medium text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full border border-slate-200 shadow-sm transition-all duration-300";
@@ -1571,25 +1535,21 @@
                     await sleep(1000);
                     if (!window.isVizRunning) return;
     
-                    // Fail
                     caption.textContent = "❌ Implausible! (Oversteering)";
                     caption.className = "text-sm font-bold text-red-600 bg-red-50 inline-block px-4 py-1.5 rounded-full border border-red-100 shadow-sm transition-all duration-300";
                     gate.className = "w-14 h-14 rounded-lg border-2 shadow-sm flex items-center justify-center relative transition-all duration-300 transform scale-100 border-red-500 bg-red-50 shake";
                     gateIcon.textContent = "block";
                     gateIcon.className = "material-symbols-outlined text-red-600 text-2xl";
                     
-                    // Feedback Loop
                     feedbackArrow.style.opacity = 1;
                     await sleep(1500);
                     if (!window.isVizRunning) return;
     
-                    // --- PHASE 2: Adjustment ---
                     setActiveStep(2);
                     feedbackArrow.style.opacity = 0;
                     caption.textContent = "Reducing Strength...";
                     caption.className = "text-sm font-bold text-indigo-600 bg-indigo-50 inline-block px-4 py-1.5 rounded-full border border-indigo-100 shadow-sm transition-all duration-300";
                     
-                    // Un-highlight bottom layers (simulate dropping layers)
                     for(let i=0; i<4; i++) {
                         document.getElementById(`viz-layer-${i}`).className = "w-full flex-1 bg-slate-100 rounded-[2px] transition-colors duration-300";
                     }
@@ -1597,8 +1557,7 @@
                     await sleep(1500);
                     if (!window.isVizRunning) return;
     
-                    // Check Again
-                    setActiveStep(1); // Back to check
+                    setActiveStep(1);
                     caption.textContent = "Re-checking Plausibility...";
                     caption.className = "text-sm font-medium text-slate-600 bg-white inline-block px-4 py-1.5 rounded-full border border-slate-200 shadow-sm transition-all duration-300";
                     
@@ -1608,7 +1567,6 @@
                     await sleep(1000);
                     if (!window.isVizRunning) return;
     
-                    // Success
                     caption.textContent = "✅ Plausible! Token Accepted.";
                     caption.className = "text-sm font-bold text-emerald-600 bg-emerald-50 inline-block px-4 py-1.5 rounded-full border border-emerald-100 shadow-sm transition-all duration-300";
                     gate.className = "w-14 h-14 rounded-lg border-2 shadow-sm flex items-center justify-center relative transition-all duration-300 transform scale-100 border-emerald-500 bg-emerald-50";
@@ -1656,14 +1614,12 @@
                     gateIcon.className = "material-symbols-outlined text-slate-300 text-2xl transition-colors duration-300";
                 }
     
-                // Start Viz
                 window.isVizRunning = true;
                 window.isVizFullView = false;
                 window.runCycle();
             }
         };
 
-        // GLOBAL HELPERS FOR VIZ TOGGLE
         window.isVizFullView = false;
         window.isVizRunning = true;
         window.vizTimeout = null;
@@ -1680,7 +1636,6 @@
             ];
 
             if (window.isVizFullView) {
-                // STOP ANIMATION
                 window.isVizRunning = false;
                 clearTimeout(window.vizTimeout);
                 
@@ -1695,7 +1650,6 @@
                     s.classList.add('active', 'opacity-100');
                 });
             } else {
-                // RESUME
                 window.isVizRunning = true;
                 animView.classList.remove('hidden');
                 staticView.classList.add('hidden');
@@ -1710,7 +1664,6 @@
         function showDemoSection() {
             const demo = document.getElementById('demo');
             demo.classList.remove('hidden');
-            // Small delay to allow display:block to apply before opacity transition
             setTimeout(() => {
                 demo.classList.remove('opacity-0');
                 demo.scrollIntoView({ behavior: 'smooth' });
@@ -1722,9 +1675,7 @@
             const btn = document.getElementById('btn-launch-demo');
             
             if (demo.classList.contains('hidden')) {
-                // Show Demo
                 demo.classList.remove('hidden');
-                // Small delay to allow display:block to apply before opacity transition
                 setTimeout(() => {
                     demo.classList.remove('opacity-0');
                     demo.scrollIntoView({ behavior: 'smooth' });
@@ -1734,11 +1685,10 @@
                 btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-500', 'shadow-indigo-200');
                 btn.classList.add('bg-slate-600', 'hover:bg-slate-500', 'shadow-slate-200');
             } else {
-                // Hide Demo
                 demo.classList.add('opacity-0');
                 setTimeout(() => {
                     demo.classList.add('hidden');
-                }, 700); // Wait for transition
+                }, 700); 
                 
                 btn.innerHTML = '<span class="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">rocket_launch</span> Launch Interactive Demo';
                 btn.classList.add('bg-indigo-600', 'hover:bg-indigo-500', 'shadow-indigo-200');
@@ -1749,7 +1699,7 @@
         window.onload = () => { 
             app.init(); 
             initMethodAnimation(); 
-            app.runFigureViz(); // Start the new figure animation
+            app.runFigureViz();
             if(window.MathJax) MathJax.typesetPromise(); 
         };
     </script>
