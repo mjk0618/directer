@@ -1,6 +1,6 @@
 # DIRECTER: Enhancing Instruction Following of LLMs via Activation Steering with Dynamic Rejection
 
-[![Paper](https://img.shields.io/badge/Paper-Preprint%20(Coming%20Soon)-b31b1b.svg)]()
+[![Paper](https://img.shields.io/badge/Paper-Openreview-b31b1b.svg)](https://openreview.net/forum?id=OpuPBNcQwe)
 [![Project Page](https://img.shields.io/badge/Project-Page-blue.svg)](https://mjk0618.github.io/directer/)
 
 ![DIRECTER Method Overview](./assets/directer.png)
