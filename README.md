@@ -31,10 +31,10 @@ If you find this work useful, please cite our paper:
 
 ```bibtex
 @inproceedings{
-kang2026enhancing,
-title={Enhancing Instruction Following of {LLM}s via Activation Steering with Dynamic Rejection},
-author={Minjae Kang and Jaehyung Kim},
-booktitle={The Fourteenth International Conference on Learning Representations},
-year={2026},
-url={https://openreview.net/forum?id=OpuPBNcQwe}
+	kang2026enhancing,
+	title={Enhancing Instruction Following of {LLM}s via Activation Steering with Dynamic Rejection},
+	author={Minjae Kang and Jaehyung Kim},
+	booktitle={The Fourteenth International Conference on Learning Representations},
+	year={2026},
+	url={https://openreview.net/forum?id=OpuPBNcQwe}
 }
