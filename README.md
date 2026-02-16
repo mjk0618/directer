@@ -25,14 +25,16 @@ This process is guided by a lightweight, one-time **Sensitivity Analysis** that 
 
 We are currently preparing the codebase for public release. Please watch this repository for updates.
 
-<!-- ## Citation
+## Citation
 
 If you find this work useful, please cite our paper:
 
 ```bibtex
-@article{directer2026,
-  title={Enhancing Instruction Following of LLMs via Activation Steering with Dynamic Rejection},
-  author={Anonymous},
-  journal={Preprint},
-  year={2025}
-} -->
+@inproceedings{
+kang2026enhancing,
+title={Enhancing Instruction Following of {LLM}s via Activation Steering with Dynamic Rejection},
+author={Minjae Kang and Jaehyung Kim},
+booktitle={The Fourteenth International Conference on Learning Representations},
+year={2026},
+url={https://openreview.net/forum?id=OpuPBNcQwe}
+}
